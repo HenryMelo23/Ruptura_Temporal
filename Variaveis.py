@@ -318,7 +318,8 @@ eliminacoes_consecutivas = 0
 bonus_pontuacao = 0
 Mercenaria_Active = False
 Valor_Bonus=25
-
+Tempo_cura=2500
+porcentagem_cura=0.005
 
 
 frames_onda_cinetica = [
