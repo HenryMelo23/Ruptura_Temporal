@@ -1,7 +1,6 @@
 import pygame
 import sys
 import random
-from Deck import frames_por, frames_trembo, frames_sec
 from Variaveis import *
 import time
 
