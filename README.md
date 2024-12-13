@@ -55,22 +55,30 @@ Imagens geradas por IA — Criadas com inteligência artificial e tratadas manua
 O projeto tem o propósito de:
 
 📘 Compartilhar conhecimento: Tornar o código aberto e acessível para que qualquer pessoa possa aprender junto comigo.
+
 🎨 Criar algo único e pessoal: Transformar a ideia inicial em algo que todos possam aproveitar e modificar.
+
 🕹️ Contribuir para a comunidade: Oferecer diversão e aprendizado para quem quiser entrar no mundo do desenvolvimento de jogos.
+
 🔍 Como Contribuir
+
 Caso deseje contribuir com o projeto "Ruptura Temporal", sinta-se livre para:
 
 📝 Fazer fork e criar pull requests.
+
 📢 Relatar bugs e sugerir melhorias.
+
 🤝 Compartilhar ideias e aprender junto!
+
 🔗 Licença
+
 Este projeto está licenciado sob a Creative Commons Attribution-NonCommercial-ShareAlike 4.0.
 
 Direitos e Restrições:
-🚫 Uso Comercial Proibido: Não é permitido usar o projeto para fins comerciais sem autorização explícita.
-🔄 Modificação e Redistribuição: Permite modificar e redistribuir o projeto, desde que atribua ao autor original e mantenha a mesma licença Creative Commons.
-📜 Agradecimentos
 
+🚫 Uso Comercial Proibido: Não é permitido usar o projeto para fins comerciais sem autorização explícita.
+
+🔄 Modificação e Redistribuição: Permite modificar e redistribuir o projeto, desde que atribua ao autor original e mantenha a mesma licença Creative Commons.
 
 📜 Agradecimentos
 
