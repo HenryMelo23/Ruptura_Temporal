@@ -22,7 +22,7 @@ MENU :
   <img src="Sprites/Git/Fase1_git.png" alt="Captura de Tela" width="500" />
 </div>
 
-🌊 Fase 1: A Praia em Ruínas
+❄️ Fase 2: O Reino Gélido
 <div style="text-align: center;">
   <img src="Sprites/Git/Fase2_git.png" alt="Captura de Tela" width="500" />
 </div>
