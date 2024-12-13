@@ -2,14 +2,18 @@
 
 🚀 Ruptura Temporal
 
-<img src="Sprites/Git/Menu_intro.png" alt="Captura de Tela" width="500" />
+<div style="text-align: center;">
+  <img src="Sprites/Git/Menu_intro.png" alt="Captura de Tela" width="500" />
+</div>
 
 🎮 Um jogo open-source desenvolvido em Python com Pygame
 📜 Sobre o Projeto
 "Ruptura Temporal" é um jogo desenvolvido em Python usando a biblioteca Pygame. Este projeto foi construído não apenas como um jogo, mas como um aprendizado pessoal e comunitário. Minha jornada nesse projeto começou com a ideia de criar algo especial para a minha namorada, mas acabou se tornando algo maior do que eu poderia imaginar. Agora, o jogo está disponível para a comunidade open-source com o objetivo de contribuir para o aprendizado e diversão de todos.
 
 Este projeto não é um jogo revolucionário nem tem um código perfeito e otimizado. Cada linha, cada fase e cada elemento foram criados como parte do meu aprendizado. É uma colcha de retalho — remendada e improvisada, mas que tem seu propósito e sentido únicos.
-
+<div style="text-align: center;">
+  <img src="Sprites/Git/Fase1_git.png" alt="Captura de Tela" width="500" />
+</div>
 🛠️ Tecnologias
 Python — Linguagem principal.
 Pygame — Framework usado para o desenvolvimento do jogo.
