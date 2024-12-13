@@ -86,9 +86,9 @@ Gostaria de agradecer a todos que acompanharam e apoiaram o desenvolvimento dess
 
 ✨ Links e Contatos
 
-Instagram: @henri_meelo
-
-YouTube: HMeloI
+- **Instagram:** [@henri_meelo](https://www.instagram.com/henri_meelo/)
+  
+- **YouTube:** [HMeloI](https://www.youtube.com/@HMeloI)
 
 Seja você um desenvolvedor iniciante ou experiente, "Ruptura Temporal" é um projeto feito para todos. Aproveite, aprenda e contribua. Vamos crescer e evoluir juntos!
 
