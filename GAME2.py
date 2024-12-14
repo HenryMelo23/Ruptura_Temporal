@@ -20,8 +20,7 @@ texto_dano = None
 tempo_texto_dano = 0
 
 velocidade_inimigo2=0.85
-velocidade_antiga=1.5
-velocidade_disparo_inimigo = 3  # Ajuste conforme necessário
+velocidade_disparo_inimigo = 5  # Ajuste conforme necessário
 
 estalos = pygame.mixer.Sound("Sounds/Estalo.mp3")
 estalos.set_volume(0.07) 
@@ -620,7 +619,7 @@ while running:
                     dano_inimigo_perto+=0.35
                     dano_person_hit+=8
                     vida_maxima_petro+=35
-                    dano_petro+=0.015
+                    dano_petro+=0.035
                    
                     dano_boss2+=7
                     dano_inimigo_longe+=2
@@ -638,12 +637,12 @@ while running:
                         
                     
                     if not boss_vivo2:
-                        vida_boss += 112
-                        vida_maxima_boss2 = vida_boss2
-                        vida_boss3 += 123
-                        vida_maxima_boss3 = vida_boss3
-                        vida_boss4 += 100
-                        vida_maxima_boss4 = vida_boss4
+                        vida_boss2+=66
+                        vida_maxima_boss2= vida_boss2
+                        vida_boss3+=72
+                        vida_maxima_boss3= vida_boss3   
+                        vida_boss4+=82
+                        vida_maxima_boss4= vida_boss4
                     if vida_petro < (vida_maxima_petro):
                         vida_petro += (vida_maxima_petro-vida_petro)*0.25
 
@@ -655,7 +654,7 @@ while running:
                     dano_inimigo_perto+=0.35
                     dano_person_hit+=8
                     vida_maxima_petro+=35
-                    dano_petro+=0.015
+                    dano_petro+=0.035
                    
                     dano_boss2+=7
                     dano_inimigo_longe+=2
@@ -673,13 +672,12 @@ while running:
                         
                     
                     if not boss_vivo2:
-                        if vida_boss2 > 0:
-                            vida_boss += 112
-                            vida_maxima_boss2 = vida_boss2
-                            vida_boss3 += 123
-                            vida_maxima_boss3 = vida_boss3
-                            vida_boss4 += 100
-                            vida_maxima_boss4 = vida_boss4
+                        vida_boss2+=66
+                        vida_maxima_boss2= vida_boss2
+                        vida_boss3+=72
+                        vida_maxima_boss3= vida_boss3   
+                        vida_boss4+=82
+                        vida_maxima_boss4= vida_boss4
                     if vida_petro < (vida_maxima_petro):
                         vida_petro += (vida_maxima_petro-vida_petro)*0.25
                     break  # Sai do loop interno para evitar problemas ao modificar a lista enquanto iteramos sobre ela
@@ -833,7 +831,7 @@ while running:
                         dano_inimigo_perto+=0.35
                         dano_person_hit+=0.25
                         inimigos_eliminados += 1
-                        dano_petro+=0.0015
+                        dano_petro+=0.035
                         dano_boss2+=7
                         dano_inimigo_longe+=2
                         # Remove o inimigo da lista de inimigos comuns
@@ -843,15 +841,12 @@ while running:
                         
                     
                     if not boss_vivo2:
-                       
-                        vida_boss += 112
-                        vida_maxima_boss2 = vida_boss2
-                
-                        vida_boss3 += 123
-                        vida_maxima_boss3 = vida_boss3
-                
-                        vida_boss4 += 100
-                        vida_maxima_boss4 = vida_boss4
+                        vida_boss2+=66
+                        vida_maxima_boss2= vida_boss2
+                        vida_boss3+=72
+                        vida_maxima_boss3= vida_boss3   
+                        vida_boss4+=82
+                        vida_maxima_boss4= vida_boss4
 
 
 
@@ -984,7 +979,7 @@ while running:
                     dano_inimigo_perto+=0.35
                     dano_person_hit+=8
                     vida_maxima_petro+=35
-                    dano_petro+=0.015
+                    dano_petro+=0.035
                    
                     dano_boss2+=7
                     dano_inimigo_longe+=2
@@ -995,12 +990,12 @@ while running:
                         
                     
                     if not boss_vivo2:
-                        vida_boss += 112
-                        vida_maxima_boss2 = vida_boss2
-                        vida_boss3 += 123
-                        vida_maxima_boss3 = vida_boss3
-                        vida_boss4 += 100
-                        vida_maxima_boss4 = vida_boss4
+                        vida_boss2+=66
+                        vida_maxima_boss2= vida_boss2
+                        vida_boss3+=72
+                        vida_maxima_boss3= vida_boss3   
+                        vida_boss4+=82
+                        vida_maxima_boss4= vida_boss4
 
         
         # Controle de dano para o boss
@@ -1049,7 +1044,7 @@ while running:
         desenhar_barra_de_vida(tela, inimigo["rect"].x, inimigo["rect"].y - 10, largura_inimigo, 5, inimigo["vida"], inimigo["vida_maxima"])
     
         tempo_atual = pygame.time.get_ticks()
-        if tempo_atual - tempo_ultimo_disparo_inimigo >= intervalo_disparo_inimigo and random.random() <= 0.008:  #frequencia do disparo do sinimigos
+        if tempo_atual - tempo_ultimo_disparo_inimigo >= intervalo_disparo_inimigo and random.random() <= 0.25:  #frequencia do disparo do sinimigos
             disparos_inimigos.append(criar_disparo_inimigo((inimigo["rect"].x, inimigo["rect"].y), (pos_x_personagem, pos_y_personagem)))
             tempo_ultimo_disparo_inimigo = tempo_atual  # Atualize o tempo do último disparo
 
@@ -1133,7 +1128,7 @@ while running:
             trembo = False  # Consome o "trembo"
             imune_tempo_restante = 10000
             teleportado = True  # Ativa o teleporte aleatório
-            porcentagem_cura= 0.005
+            porcentagem_cura= 0.02
             Tempo_cura=2500
             pos_x_personagem, pos_y_personagem = gerar_posicao_aleatoria(largura_mapa, altura_mapa, largura_personagem, altura_personagem)
         else:

@@ -21,7 +21,6 @@ texto_dano = None
 tempo_texto_dano = 0
 
 velocidade_inimigo2=0.85
-velocidade_antiga=1.5
 velocidade_disparo_inimigo = 3  # Ajuste conforme necessário
 
 estalos = pygame.mixer.Sound("Sounds/Estalo.mp3")
@@ -789,6 +788,11 @@ while running:
         pos_x_segundo_personagem = pos_x_personagem + largura_personagem + 4
         pos_y_segundo_personagem = pos_y_personagem
         tela.blit(frames_animacao_trembo[direcao_atual][frame_atual], (pos_x_segundo_personagem, pos_y_segundo_personagem))
+    if trembo and tempo_atual- tempo_ultima_regeneracao >= Tempo_cura and vida < vida_maxima :
+        if vida_maxima < vida:
+            vida=vida_maxima
+        vida+= (vida_maxima*porcentagem_cura)
+        tempo_ultima_regeneracao = tempo_atual
     
 
 
@@ -859,10 +863,9 @@ while running:
                         
                         
                         
-                    if not boss_vivo4:
-                        if vida_boss4 > 0:
-                            vida_boss4 += 100
-                            vida_maxima_boss4 = vida_boss4
+                    if not boss_vivo4: 
+                        vida_boss4+=82
+                        vida_maxima_boss4= vida_boss4
 
 
 
@@ -1004,10 +1007,9 @@ while running:
                     pontuacao_exib += 75
                     
                         
-                    if not boss_vivo4:
-                        if vida_boss4 > 0:
-                            vida_boss4 += 100
-                            vida_maxima_boss4 = vida_boss4 
+                    if not boss_vivo4: 
+                        vida_boss4+=82
+                        vida_maxima_boss4= vida_boss4
                     break 
         boss_atingido_por_onda = {}  # Dicionário para rastrear o tempo do último dano no boss
         if boss_vivo4 and onda["rect"].colliderect(pygame.Rect(pos_x_boss4, pos_y_boss4, chefe_largura4, chefe_altura4)):
@@ -1122,7 +1124,7 @@ while running:
             trembo = False  # Consome o "trembo"
             imune_tempo_restante = 10000
             teleportado = True  # Ativa o teleporte aleatório
-            porcentagem_cura= 0.005
+            porcentagem_cura= 0.02
             Tempo_cura=2500
             pos_x_personagem, pos_y_personagem = gerar_posicao_aleatoria(largura_mapa, altura_mapa, largura_personagem, altura_personagem)
         else:
