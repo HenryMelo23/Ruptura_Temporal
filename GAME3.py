@@ -21,34 +21,34 @@ estalos = pygame.mixer.Sound("Sounds/Estalo.mp3")
 estalos.set_volume(0.07) 
 
 som_ataque_boss = pygame.mixer.Sound("Sounds/Hit_Boss1.mp3")
-som_ataque_boss.set_volume(0.04)  # Defina o volume do som do ataque do boss
+som_ataque_boss.set_volume(0.04)  
 
 Hit_inimigo3 = pygame.mixer.Sound("Sounds/Inimigo3_hit.mp3")
-Hit_inimigo3.set_volume(0.04)  # Defina o volume do som do ataque do boss
+Hit_inimigo3.set_volume(0.04)  
 
 Disparo_Geo = pygame.mixer.Sound("Sounds/Disparo_Geo.wav")
-Disparo_Geo.set_volume(0.04)  # Defina o volume do som do ataque do boss
+Disparo_Geo.set_volume(0.04)  
 
 Musica_tema_Boss3 = pygame.mixer.Sound("Sounds/Fase3_Boss.mp3")
-Musica_tema_Boss3.set_volume(0.07)  # Defina o volume do som do ataque do boss
+Musica_tema_Boss3.set_volume(0.07)  
 
 Musica_tema_fases = pygame.mixer.Sound("Sounds/Fase_boas.mp3")
-Musica_tema_fases.set_volume(0.07)  # Defina o volume do som do ataque do boss
+Musica_tema_fases.set_volume(0.07)  
 
 Som_tema_fases = pygame.mixer.Sound("Sounds/Esgoto.mp3")
-Som_tema_fases.set_volume(0.10)  # Defina o volume do som do ataque do boss
+Som_tema_fases.set_volume(0.10)  
 
 Som_portal = pygame.mixer.Sound("Sounds/Portal.mp3")
-Som_portal.set_volume(0.06)  # Defina o volume do som do ataque do boss
+Som_portal.set_volume(0.06)  
 
 Boss_Queijo= pygame.mixer.Sound("Sounds/Queijo.mp3")
-Boss_Queijo.set_volume(0.11)  # Defina o volume do som do ataque do boss
+Boss_Queijo.set_volume(0.11)  
 
 Boss3_andando= pygame.mixer.Sound("Sounds/Boss3_andando.mp3")
-Boss3_andando.set_volume(0.7)  # Defina o volume do som do ataque do boss
+Boss3_andando.set_volume(0.7)  
 
 Frascos= pygame.mixer.Sound("Sounds/Frasco.mp3")
-Frascos.set_volume(0.02)  # Defina o volume do som do ataque do boss
+Frascos.set_volume(0.02)  
 
 toque=0
 
@@ -737,7 +737,7 @@ while running:
                     dano_inimigo_perto+=0.35
                     dano_person_hit+=5
                     vida_maxima_petro+=35
-                    dano_petro+=0.0015
+                    dano_petro+=0.035
                     dano_inimigo_longe+=7
                     
                     inimigos_eliminados += 1
@@ -750,10 +750,11 @@ while running:
                     else:
                         pontuacao_exib += 75
                     
-                    if not boss_vivo4:
-                        if vida_boss4 > 0:
-                            vida_boss4 += 100
-                            vida_maxima_boss4 = vida_boss4
+                    if not boss_vivo3:
+                        vida_boss3+=72
+                        vida_maxima_boss3= vida_boss3   
+                        vida_boss4+=82
+                        vida_maxima_boss4= vida_boss4
                 elif inimigo["vida"] <= 0:
                     # Se a vida do inimigo é menor ou igual a zero, remover o inimigo
                     inimigos_comum.remove(inimigo)
@@ -762,7 +763,7 @@ while running:
                     dano_inimigo_perto+=0.35
                     dano_person_hit+=5
                     vida_maxima_petro+=35
-                    dano_petro+=0.0015
+                    dano_petro+=0.035
                     dano_inimigo_longe+=7
                     
                     inimigos_eliminados += 1
@@ -775,10 +776,11 @@ while running:
                     else:
                         pontuacao_exib += 75
                     
-                    if not boss_vivo4:
-                        if vida_boss4 > 0:
-                            vida_boss4 += 100
-                            vida_maxima_boss4 = vida_boss4
+                    if not boss_vivo3:
+                        vida_boss3+=72
+                        vida_maxima_boss3= vida_boss3   
+                        vida_boss4+=82
+                        vida_maxima_boss4= vida_boss4
                     break  # Sai do loop interno para evitar problemas ao modificar a lista enquanto iteramos sobre ela
                 
 
@@ -863,6 +865,11 @@ while running:
         pos_x_segundo_personagem = pos_x_personagem + largura_personagem + 4
         pos_y_segundo_personagem = pos_y_personagem
         tela.blit(frames_animacao_trembo[direcao_atual][frame_atual], (pos_x_segundo_personagem, pos_y_segundo_personagem))
+    if trembo and tempo_atual- tempo_ultima_regeneracao >= Tempo_cura and vida < vida_maxima :
+        if vida_maxima < vida:
+            vida=vida_maxima
+        vida+= (vida_maxima*porcentagem_cura)
+        tempo_ultima_regeneracao = tempo_atual
     
 
 
@@ -925,7 +932,7 @@ while running:
                         dano_person_hit+=0.25
                         dano_inimigo_longe+=2
                         inimigos_eliminados += 1
-                        dano_petro+=0.015
+                        dano_petro+=0.035
                         # Remove o inimigo da lista de inimigos comuns
                         inimigos_comum.remove(inimigo_mais_proximo)
                         
@@ -934,14 +941,10 @@ while running:
                     
                     
                     if not Boss_vivo3:
-                        if vida_boss3>0:
-                            vida_boss3+=100
-                            vida_maxima_boss3= vida_boss3    
-
-                    if not boss_vivo4:
-                        if vida_boss4 > 0:
-                            vida_boss4 += 100
-                            vida_maxima_boss4 = vida_boss4
+                        vida_boss3+=72
+                        vida_maxima_boss3= vida_boss3   
+                        vida_boss4+=82
+                        vida_maxima_boss4= vida_boss4
                         
         if vida_petro<=0:
             Petro_active= False
@@ -1072,7 +1075,7 @@ while running:
                     dano_inimigo_perto+=0.35
                     dano_person_hit+=5
                     vida_maxima_petro+=35
-                    dano_petro+=0.0015
+                    dano_petro+=0.035
                     dano_inimigo_longe+=7
                     
                     inimigos_eliminados += 1
@@ -1080,13 +1083,10 @@ while running:
                     pontuacao_exib += 75
                     
                     if not Boss_vivo3:
-                        if vida_boss3>0:
-                            vida_boss3+=405
-                            vida_maxima_boss3= vida_boss3   
-                    if not boss_vivo4:
-                        if vida_boss4 > 0:
-                            vida_boss4 += 100
-                            vida_maxima_boss4 = vida_boss4 
+                        vida_boss3+=72
+                        vida_maxima_boss3= vida_boss3   
+                        vida_boss4+=82
+                        vida_maxima_boss4= vida_boss4
                     break  # Sai do loop interno para evitar problemas ao modificar a lista enquanto iteramos sobre ela
         boss_atingido_por_onda = {}  # Dicionário para rastrear o tempo do último dano no boss
         if Boss_vivo3 and onda["rect"].colliderect(pygame.Rect(pos_x_chefe3, pos_y_chefe3, chefe_largura3, chefe_altura3)):
@@ -1221,7 +1221,7 @@ while running:
             trembo = False  # Consome o "trembo"
             imune_tempo_restante = 10000
             teleportado = True  # Ativa o teleporte aleatório
-            porcentagem_cura= 0.005
+            porcentagem_cura= 0.02
             Tempo_cura=2500
             pos_x_personagem, pos_y_personagem = gerar_posicao_aleatoria(largura_mapa, altura_mapa, largura_personagem, altura_personagem)
         else:

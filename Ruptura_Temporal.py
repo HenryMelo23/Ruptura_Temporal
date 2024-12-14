@@ -58,7 +58,7 @@ titulo_jogo = "Ruptura Temporal"
 posicao_titulo = (largura_tela // 2, altura_tela // 8)
 
 # Adicionando a nova opção de Configuração
-opcoes = ["Iniciar Jornada", "Como Jogar", "Configuração", "Sair"]
+opcoes = ["Iniciar Jornada", "Configuração", "Sair"]
 indice_selecionado = 0
 
 DELAY_ENTRE_OPCOES = 100
@@ -102,14 +102,10 @@ while True:  # Loop principal do menu
                 if indice_selecionado == 0:
                     pygame.mixer.music.stop()
                     import GAME
-                elif indice_selecionado == 1:
-                    pygame.mixer.music.stop()
-                    import Tutorial
-                elif indice_selecionado == 2:  # Configuração de Controles
+                elif indice_selecionado == 1:  # Configuração de Controles
                     config_teclas = carregar_config_teclas()
                     tela_de_controles(config_teclas, largura_tela, altura_tela)
-
-                elif indice_selecionado == 3:
+                elif indice_selecionado == 2:
                     pygame.mixer.music.stop()
                     pygame.quit()
                     sys.exit()
@@ -132,12 +128,9 @@ while True:  # Loop principal do menu
                 if indice_selecionado == 0:
                     pygame.mixer.music.stop()
                     import GAME
-                elif indice_selecionado == 1:
-                    pygame.mixer.music.stop()
-                    import Tutorial
-                elif indice_selecionado == 2:  # Configuração de Controles
+                elif indice_selecionado == 1:  # Configuração de Controles
                     tela_de_controles()
-                elif indice_selecionado == 3:
+                elif indice_selecionado == 2:
                     pygame.mixer.music.stop()
                     pygame.quit()
                     sys.exit()

@@ -149,8 +149,8 @@ def carregar_atributos():
         
 tempo_inicial = time.time() 
 tempo_anterior = pygame.time.get_ticks()
-tempo_movimento = 5000  
-tempo_parado = 2000  
+tempo_movimento = random.randint(2000, 7000)
+tempo_parado = random.randint(500, 700) 
 movendo = True 
 boss_vivo1=False
 relogio = pygame.time.Clock()
@@ -534,7 +534,7 @@ def verificar_colisao_personagem_inimigo(personagem_rect, inimigos_rects):
     return False  # Sem colisão
 
 
-
+boss_atingido_por_onda = pygame.time.get_ticks()
 tempo_ultimo_disparo = pygame.time.get_ticks()
 
 Som_tema_fases.play(loops=-1)
@@ -653,7 +653,7 @@ while running:
                     Resistencia_petro+=0.76
                     dano_inimigo_perto+=0.35
                     vida_maxima_petro+=1.09
-                    dano_petro+=0.015
+                    dano_petro+=0.035
                     dano_inimigo_longe+=0.06
                     dano_boss+=2
                     inimigos_eliminados += 1
@@ -669,20 +669,13 @@ while running:
                         
                     if not boss_vivo1:
                         if vida_boss>0:
-                            vida_boss+=75
+                            vida_boss+=55
                             vida_maxima_boss1= vida_boss
-                    
-                    if not boss_vivo2:
-                        if vida_boss2>0:
-                            vida_boss+=200
+                            vida_boss2+=66
                             vida_maxima_boss2= vida_boss2
-                    if not Boss_vivo3:
-                        if vida_boss3>0:
-                            vida_boss3+=405
+                            vida_boss3+=72
                             vida_maxima_boss3= vida_boss3   
-                    if not boss_vivo4:
-                        if vida_boss4>0:
-                            vida_boss4+=900
+                            vida_boss4+=82
                             vida_maxima_boss4= vida_boss4
                 elif inimigo["vida"] <= 0:
                     # Se a vida do inimigo é menor ou igual a zero, remover o inimigo
@@ -692,7 +685,7 @@ while running:
                     dano_inimigo_perto+=0.35
                     dano_person_hit+=0.25
                     vida_maxima_petro+=1.09
-                    dano_petro+=0.015
+                    dano_petro+=0.035 
                     dano_inimigo_longe+=0.06
                     dano_boss+=2
                     inimigos_eliminados += 1
@@ -708,21 +701,14 @@ while running:
                         
                     if not boss_vivo1:
                         if vida_boss>0:
-                            vida_boss+=75
+                            vida_boss+=55
                             vida_maxima_boss1= vida_boss
-                    
-                    if not boss_vivo2:
-                        if vida_boss2 > 0:
-                            vida_boss += 112
-                            vida_maxima_boss2 = vida_boss2
-                    if not Boss_vivo3:
-                        if vida_boss3 > 0:
-                            vida_boss3 += 123
-                            vida_maxima_boss3 = vida_boss3
-                    if not boss_vivo4:
-                        if vida_boss4 > 0:
-                            vida_boss4 += 100
-                            vida_maxima_boss4 = vida_boss4
+                            vida_boss2+=66
+                            vida_maxima_boss2= vida_boss2
+                            vida_boss3+=72
+                            vida_maxima_boss3= vida_boss3   
+                            vida_boss4+=82
+                            vida_maxima_boss4= vida_boss4
 
                     
                        
@@ -772,7 +758,7 @@ while running:
             frames_onda = frames_onda_cinetica  # Sem rotação
 
         ondas.append({
-            "rect": pygame.Rect(posicao_inicial_onda[0], posicao_inicial_onda[1], largura_onda, altura_onda),
+            "rect": pygame.Rect(posicao_inicial_onda[0], posicao_inicial_onda[1], largura_onda, altura_onda+10),
             "direcao": direcao_onda,
             "frame_atual": 0,
             "tempo_inicio": pygame.time.get_ticks(),
@@ -897,23 +883,16 @@ while running:
                         vida_petro += (vida_maxima_petro * 0.4)
 
                     if not boss_vivo1:
-                        if vida_boss > 0:
-                            vida_boss += 75
-                            vida_maxima_boss1 = vida_boss
-
-                    if not boss_vivo2:
-                        if vida_boss2 > 0:
-                            vida_boss += 112
-                            vida_maxima_boss2 = vida_boss2
-                    if not Boss_vivo3:
-                        if vida_boss3 > 0:
-                            vida_boss3 += 123
-                            vida_maxima_boss3 = vida_boss3
-                    if not boss_vivo4:
-                        if vida_boss4 > 0:
-                            vida_boss4 += 100
-                            vida_maxima_boss4 = vida_boss4
-        boss_atingido_por_onda = {}  # Dicionário para rastrear o tempo do último dano no boss
+                        if vida_boss>0:
+                            vida_boss+=55
+                            vida_maxima_boss1= vida_boss
+                            vida_boss2+=66
+                            vida_maxima_boss2= vida_boss2
+                            vida_boss3+=72
+                            vida_maxima_boss3= vida_boss3   
+                            vida_boss4+=82
+                            vida_maxima_boss4= vida_boss4
+        
 
 
         # Controle de dano para o boss
@@ -921,9 +900,10 @@ while running:
             boss_id = "boss"  # Identificador único para o boss no dicionário
             tempo_atual = pygame.time.get_ticks()
 
-            if boss_id not in boss_atingido_por_onda or tempo_atual - boss_atingido_por_onda[boss_id] >= 8000: 
-                vida_boss -= dano_person_hit * 3  # Ajuste o dano conforme necessário
-                boss_atingido_por_onda[boss_id] = tempo_atual  # Atualiza o tempo do último dano
+            if tempo_atual - boss_atingido_por_onda >= 500: 
+                vida_boss -= dano_person_hit * 5  # Ajuste o dano conforme necessário
+                
+                boss_atingido_por_onda = tempo_atual  # Atualiza o tempo do último dano
 
                 # Verifica se o boss foi derrotado
                 if vida_boss <= 0:
@@ -937,17 +917,21 @@ while running:
             # Atualize o tempo anterior para o tempo atual
             tempo_anterior = tempo_atual
             movendo = False
+            tempo_movimento = random.randint(3000, 7000)
+        # Atualizar movimento dos inimigos com previsão
+        tempo_previsao = 5  # Tempo em quadros para prever o movimento
+        atualizar_movimento_inimigos(
+        inimigos_comum, pos_x_personagem, pos_y_personagem, ultima_tecla_movimento, velocidade_personagem, tempo_previsao
+        )
     else:
         if tempo_atual - tempo_anterior >= tempo_parado:
             # Atualize o tempo anterior para o tempo atual
             tempo_anterior = tempo_atual
             movendo = True
+            tempo_parado = random.randint(10, 3000)
+            
 
-    # Atualizar movimento dos inimigos com previsão
-    tempo_previsao = 5  # Tempo em quadros para prever o movimento
-    atualizar_movimento_inimigos(
-        inimigos_comum, pos_x_personagem, pos_y_personagem, ultima_tecla_movimento, velocidade_personagem, tempo_previsao
-    )
+    
 
 
     # Desenhe os inimigos na tela
@@ -985,7 +969,7 @@ while running:
             trembo = False  # Consome o "trembo"
             imune_tempo_restante = 10000
             teleportado = True  # Ativa o teleporte aleatório
-            porcentagem_cura= 0.005
+            porcentagem_cura= 0.02
             Tempo_cura=2500
             pos_x_personagem, pos_y_personagem = gerar_posicao_aleatoria(largura_mapa, altura_mapa, largura_personagem, altura_personagem)
         else:
@@ -1081,6 +1065,11 @@ while running:
         pos_x_segundo_personagem = pos_x_personagem + largura_personagem + 4
         pos_y_segundo_personagem = pos_y_personagem
         tela.blit(frames_animacao_trembo[direcao_atual][frame_atual], (pos_x_segundo_personagem, pos_y_segundo_personagem))
+    if trembo and tempo_atual- tempo_ultima_regeneracao >= Tempo_cura and vida < vida_maxima :
+        if vida_maxima < vida:
+            vida=vida_maxima
+        vida+= (vida_maxima*porcentagem_cura)
+        tempo_ultima_regeneracao = tempo_atual
     
     
     
@@ -1142,7 +1131,7 @@ while running:
                         vida_maxima_petro+=35
                         dano_person_hit+=8
                         inimigos_eliminados += 1
-                        dano_petro+=0.015
+                        dano_petro+=0.035 
                         dano_inimigo_longe+=2
                         dano_inimigo_perto+=0.35
                         # Remove o inimigo da lista de inimigos comuns
@@ -1150,21 +1139,14 @@ while running:
                         
                     if not boss_vivo1:
                         if vida_boss>0:
-                            vida_boss+=250
+                            vida_boss+=55
                             vida_maxima_boss1= vida_boss
-                    
-                    if not boss_vivo2:
-                        if vida_boss2 > 0:
-                            vida_boss += 112
-                            vida_maxima_boss2 = vida_boss2
-                    if not Boss_vivo3:
-                        if vida_boss3 > 0:
-                            vida_boss3 += 123
-                            vida_maxima_boss3 = vida_boss3
-                    if not boss_vivo4:
-                        if vida_boss4 > 0:
-                            vida_boss4 += 100
-                            vida_maxima_boss4 = vida_boss4
+                            vida_boss2+=66
+                            vida_maxima_boss2= vida_boss2
+                            vida_boss3+=72
+                            vida_maxima_boss3= vida_boss3   
+                            vida_boss4+=82
+                            vida_maxima_boss4= vida_boss4
                         
         if vida_petro<=0:
             Petro_active= False
@@ -1210,7 +1192,8 @@ while running:
                     # Aplica dano ao "boss"
                     vida_petro -= int(dano_boss)
                     vida_petro+= int(vida_maxima_petro-vida_petro)*quantidade_roubo_vida
-                    vida_boss-= int(dano_person_hit*0.25)+300
+                    vida_boss-= int(dano_person_hit*0.15)+15
+                    0
                     # Aqui você pode adicionar outras ações relacionadas ao dano ao "boss"
                     tempo_anterior_petro = tempo_atual_petro
 
