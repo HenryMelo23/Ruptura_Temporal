@@ -11,7 +11,7 @@
 Este projeto não é um jogo revolucionário nem tem um código perfeito e otimizado. Cada linha, cada fase e cada elemento foram criados como parte do meu aprendizado. É uma colcha de retalho — remendada e improvisada, mas que tem seu propósito e sentido únicos.
 
 COMO INSTALAR O JOGO SEM OS ARQUIVOS .py (PARA QUEM NÂO É DEV):
-[CLIQUE AQUI]([https://www.instagram.com/henri_meelo/](https://github.com/HenryMelo23/Ruptura_Temporal/releases/tag/v0.0.1))
+[CLIQUE AQUI](https://github.com/HenryMelo23/Ruptura_Temporal/releases/tag/v0.0.1)
 
 
 MENU :
