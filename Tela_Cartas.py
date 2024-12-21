@@ -17,7 +17,17 @@ def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo,
     pausa = True
     DELAY_ENTRE_CARTAS = 200
     ultima_mudanca_de_carta = pygame.time.get_ticks()
+    
     pygame.init()
+    icone_q = pygame.image.load('Sprites/Q.png')
+    icone_q = pygame.transform.scale(icone_q, (50, 50))  # Redimensiona para o tamanho desejado
+
+    icone_rolagem = pygame.image.load('Sprites/Rolagem.png')
+    icone_rolagem = pygame.transform.scale(icone_rolagem, (50, 50))  # Redimensiona para o tamanho desejado
+
+    # Posição dos ícones no canto superior esquerdo
+    posicao_icone_q = (10, 10)
+    posicao_icone_rolagem = (70, 10)
     tela = pygame.display.set_mode((largura_tela, altura_tela))
     pygame.display.set_caption('Tela de Pausa')
     valor_rolagem=250
@@ -202,6 +212,7 @@ def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo,
     while pausa:
         pos_x = largura_tela // 2 - (len(cartas_compradas) * 100) // 2  # centraliza as cartas
         pos_y = altura_tela - 90  
+        
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 pygame.quit()
@@ -488,8 +499,11 @@ def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo,
 
         # Renderizar explicação menor
         render_texto_com_contorno(fonte_pequena, "aumenta 40% do valor líquido (por rolagem)", cor_texto, cor_contorno, 450, 180)
+        tela.blit(icone_q, posicao_icone_q)
+        tela.blit(icone_rolagem, posicao_icone_rolagem)
         pygame.display.flip()
 
+        
     return [velocidade_personagem, intervalo_disparo,vida,largura_disparo, altura_disparo,trembo,dano_person_hit,chance_critico,roubo_de_vida,
             quantidade_roubo_vida,tempo_cooldown_dash,vida_maxima,Petro_active,Resistencia,vida_petro,vida_maxima_petro,dano_petro,xp_petro,petro_evolucao,Resistencia_petro,
             Chance_Sorte,Poison_Active,Dano_Veneno_Acumulado,Executa_inimigo,Ultimo_Estalo,Mercenaria_Active,Valor_Bonus,dispositivo_ativo,Tempo_cura,porcentagem_cura,cartas_compradas,pontuacao_exib]
