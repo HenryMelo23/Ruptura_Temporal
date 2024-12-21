@@ -33,6 +33,8 @@ if cont ==1:
 centro_horizontal_tela = largura_mapa // 2
 espacamento = 100
 ########################################## BOSS 1
+vida_boss = 5000
+vida_maxima_boss1= vida_boss
 chefe_largura, chefe_altura = largura_tela * 0.2, altura_tela * 0.2
 pos_x_chefe, pos_y_chefe = largura_mapa // 2 - chefe_largura // 2, altura_mapa // 2 - chefe_altura // 2
 tempo_animacao_chefe = 300  # Tempo em milissegundos entre cada quadro
@@ -61,27 +63,26 @@ comportamento_boss = "aleatorio"  # Comece com movimento aleatório
 ultima_direcao_boss = 'aleatorio'
 Velocidade_boss=2
 ultima_direcao_boss = random.choice(['up', 'down', 'left', 'right'])  # Inicialize a direção do boss   
-
-####################### Variáveis para o ataque do boss
-ataque_boss_paths = ["Sprites/Hit1.png", "Sprites/Hit2.png", "Sprites/Hit3.png"]
-largura_ataque_boss, altura_ataque_boss = 60, 60
-frames_ataque_boss = [pygame.transform.scale(pygame.image.load(path), (largura_ataque_boss, altura_ataque_boss)) for path in ataque_boss_paths]
-ataques_boss = []
-tempo_ultimo_ataque_boss = pygame.time.get_ticks()
-intervalo_ataque_boss = 3500  # Intervalo entre ataques em milissegundos
-tempo_ataque_boss = 0
-duracao_frame_ataque_boss = 3500  # Duração de cada frame em milissegundos
 tempo_ultimo_dano_atingido = pygame.time.get_ticks()
 intervalo_dano_atingido = 1500  # 2 segundos
-
-vida_boss = 85000
-vida_maxima_boss1= vida_boss
 largura_barra_boss = 20
 altura_barra_boss = 200
 pos_x_barra_boss = largura_mapa - 30
 pos_y_barra_boss = altura_tela // 2 - altura_barra_boss // 2
-Zona_quant=10
 
+tempo_ultimo_dano_ataque=0
+em_ataque_especial = False
+jogador_posicoes = []
+imagens_ataque = [
+    pygame.transform.scale(pygame.image.load("Sprites/Bolha1.png"), (100, 180)),
+    pygame.transform.scale(pygame.image.load("Sprites/Bolha2.png"), (100, 180)),
+    pygame.transform.scale(pygame.image.load("Sprites/Bolha3.png"), (100, 180)),
+    pygame.transform.scale(pygame.image.load("Sprites/Bolha4.png"), (100, 180)),
+    pygame.transform.scale(pygame.image.load("Sprites/Bolha5.png"), (100, 180))
+]
+tempo_ataque_especial = 0
+intervalo_troca = 850  # 2 segundos para trocar entre as imagens
+hitboxes = {}
 ########################################## BOSS 2
 
 chefe_largura2, chefe_altura2 = largura_tela * 0.2, altura_tela * 0.3
@@ -108,7 +109,7 @@ frames_chefe2_4 = [
 ]
 frame_porcentagem=frames_chefe2_1
 boss_vivo2=True
-vida_boss2 = 100000
+vida_boss2 = 8000
 vida_maxima_boss2= vida_boss2
 largura_barra_boss2 = 20
 altura_barra_boss2 = 200
@@ -122,6 +123,9 @@ contador_colisoes = 0
 vida_planeta=150
 # Organizando os frames do Boss em uma lista
 chefe_largura4, chefe_altura4 = largura_tela * 0.2, altura_tela * 0.3
+
+
+# Posição do boss (canto direito, centro vertical
 frames_chefe4_1 = [
     pygame.transform.scale(pygame.image.load("Sprites/Boss4_1.png"), (chefe_largura4, chefe_altura4)), 
     pygame.transform.scale(pygame.image.load("Sprites/Boss4_3.png"), (chefe_largura4, chefe_altura4))
@@ -153,11 +157,13 @@ boss_rect = frames_chefe4_1[current_frame_index].get_rect()
 
 boss_rect.center = (largura_tela - boss_rect.width // 2, altura_tela // 2)
 
+pos_x_boss4 = largura_tela - chefe_largura4  # Alinha à direita
+pos_y_boss4 = altura_tela // 3 # Centraliza no eixo Y
+
 last_frame_change = pygame.time.get_ticks()
 frame_interval = 1000 
 
-
-
+rect_boss = pygame.Rect(pos_x_boss4, pos_y_boss4, chefe_largura4, chefe_altura4)
 current_frame_disparo_boss = 0
 tempo_frame_disparo_boss = 0  # Para controlar a troca de frames
 intervalo_frame_disparo_boss = 200  # Intervalo em milissegundos
@@ -168,8 +174,7 @@ ultimo_disparo = pygame.time.get_ticks()
 intervalo_disparo_Boss_4 = 6000 
 
 
-
-vida_boss4 = 130000
+vida_boss4 = 10000
 vida_maxima_boss4 = vida_boss4
 largura_barra_boss4 = 20
 altura_barra_boss4 = 200
@@ -211,7 +216,7 @@ tempo_inicio_ataque_vertical = 0
 tempo_inicio_ataque_horizontal = 0
 
 ############################################ Boss 3
-vida_boss3 = 200000
+vida_boss3 = 20000
 vida_maxima_boss3=vida_boss3
 largura_barra_boss3 = 20
 altura_barra_boss3 = 200
@@ -227,7 +232,7 @@ pontuacao_exib=700
 pontuacao_magia=0
 vida_maxima = 450
 vida = vida_maxima  # Valor inicial da vida
-largura_barra_vida = int(root.winfo_screenwidth()*0.095)
+largura_barra_vida = int(largura_tela*0.17)
 altura_barra_vida = 20
 posicao_circulo = (20, altura_mapa * 0.09)  # mesma posição da barra de magia
 raio_circulo = int(largura_mapa * 0.025)  # ajustando o tamanho do círculo
@@ -238,7 +243,7 @@ posicao_imagem_relogio = (13, altura_mapa * 0.074)
 Executa_inimigo=0.05
 Ultimo_Estalo=False
 imagem_vida=pygame.image.load("Sprites/vida.png")
-imagem_vida = pygame.transform.scale(imagem_vida, (largura_mapa* 0.25, altura_mapa*0.20))
+imagem_vida = pygame.transform.scale(imagem_vida, (largura_tela* 0.25, altura_tela*0.20))
 posicao_vida = (13, -40)  
 Chance_Sorte=0
 Poison_Active=False
@@ -253,7 +258,6 @@ fonte_dano_normal = pygame.font.Font(fonte_hit, 26)
 fonte_dano_critico = pygame.font.Font(fonte_hit, 43)
 fonte_veneno = pygame.font.Font(fonte_hit, 26)
 Dano_Veneno_Acumulado=0.05
-tab_pressionado = False
 #########################################  CORES_GERAIS
 
 amarelo= (255, 255, 0)
@@ -265,7 +269,7 @@ azul = (0, 0, 255)
 intervalo_hit_inimigo = 700  
 inimigos_atingidos_por_onda = {}
 if largura_tela == 1366:
-    vel_inimig= 1  # Ajuste a velocidade conforme necessário
+    vel_inimig= 1  
 elif largura_tela == 1920:
     vel_inimig= 1
 elif largura_tela <= 1360:
@@ -282,10 +286,6 @@ frames_inimigo = [pygame.transform.scale(pygame.image.load("Sprites/inimig1.png"
 
 frames_inimigo2=[pygame.transform.scale(pygame.image.load("Sprites/inimig3.png"), (100, 100)),
                  pygame.transform.scale(pygame.image.load("Sprites/inimig4.png"), (102, 102))]
-
-
-
-
 frames_inimigo_esquerda2 = [pygame.transform.scale(pygame.image.load("Sprites/inimigo_direita2-1.png"), (largura_inimigo, altura_inimigo)),
                            pygame.transform.scale(pygame.image.load("Sprites/inimigo_direita2-2.png"), (largura_inimigo, altura_inimigo))]
 frames_inimigo_direita2 = [pygame.transform.scale(pygame.image.load("Sprites/inimigo_esquerda2-1.png"), (largura_inimigo, altura_inimigo)),
@@ -307,9 +307,10 @@ roubo_de_vida=0
 quantidade_roubo_vida=0.10
 queijo_geracao=1
 dano_boss=90
+Dano_Boss_Habilit= 100
 dano_inimigo_longe=24
-largura_onda, altura_onda = 70, 120  
-velocidade_onda = 3
+largura_onda, altura_onda = 70, 70 
+velocidade_onda = 5
 tempo_ultimo_uso_habilidade = 0
 cooldown_habilidade = 10000  # Cooldown de 3 segundos
 ondas = []
@@ -320,10 +321,10 @@ Mercenaria_Active = False
 Valor_Bonus=25
 Tempo_cura=2500
 porcentagem_cura=0.005
-
+tempo_ultima_regeneracao=0
 
 frames_onda_cinetica = [
-    pygame.image.load(f"Sprites/Habilit_{i}.png") for i in range(1, 8)
+    pygame.image.load(f"Sprites/Pulso_{i}.png") for i in range(1, 3)
 ]
 frames_onda_cinetica = [
     pygame.transform.scale(frame, (largura_onda, altura_onda)) for frame in frames_onda_cinetica
@@ -396,8 +397,6 @@ teleporte_sprites = [pygame.transform.scale(img, teleporte_size) for img in tele
 teleporte_index = 0
 teleporte_duration = 500  # Duração de cada quadro da animação (em milissegundos)
 teleporte_timer = 0
-# ... Código existente ...
-
 
 # Configurações do disparo
 disparo_paths = ["Sprites/Fogo1.png", "Sprites/Fogo2.png"]
@@ -481,18 +480,6 @@ frames_disparo = [pygame.transform.scale(frame, (largura_disparo, altura_disparo
 imagem_personagem_congelada = pygame.image.load("Sprites/congelada1.png")
 imagem_personagem_congelada = pygame.transform.scale(imagem_personagem_congelada, (largura_personagem, altura_personagem))
 cor_vida=verde
-
-
-
-##############################      FUNÇÔES
-
-
-def criar_ataque_boss():
-    return {
-        "rect": pygame.Rect(random.randint(0, largura_mapa - largura_ataque_boss), random.randint(0, altura_mapa - altura_ataque_boss), largura_ataque_boss, altura_ataque_boss),
-        "image_index": 0,
-        "tempo_inicio": pygame.time.get_ticks()
-    }
 
 
 
@@ -662,9 +649,9 @@ def rotacionar_frames(frames, angulo):
 def desenhar_habilidades(tela, cooldowns,dispositivo_ativo):
    
     if dispositivo_ativo == "teclado":
-        tecla_disparo=  pygame.key.name(config_teclas["Disparar"])
+        tecla_disparo=  "LMB"
         tecla_teleporte= pygame.key.name(config_teclas["Teleporte"])
-        tecla_onda=  pygame.key.name(config_teclas["Onda"])
+        tecla_onda=  "RMB"
         tecla_loja=  pygame.key.name(config_teclas["Comprar na loja"])
     else:
         tecla_disparo=  "A"
@@ -754,13 +741,72 @@ def atualizar_movimento_inimigos(inimigos, pos_x_personagem, pos_y_personagem, d
             inimigo["rect"].x += (dx / distancia) * Velocidade_Inimigos_1
             inimigo["rect"].y += (dy / distancia) * Velocidade_Inimigos_1
 
+def calcular_angulo_disparo(posicao_jogador, posicao_mouse):
+    dx = posicao_mouse[0] - posicao_jogador[0]
+    dy = posicao_mouse[1] - posicao_jogador[1]
+    angulo = math.atan2(dy, dx)
+    return angulo
+
+def verificar_colisao_disparo_inimigo(disparo, pos_inimigo, largura_disparo, altura_disparo, largura_inimigo, altura_inimigo, inimigos_eliminados):
+    rect_disparo = disparo["rect"]  # Use o rect do disparo diretamente
+    rect_inimigo = pygame.Rect(pos_inimigo[0], pos_inimigo[1], largura_inimigo, altura_inimigo)
+    return rect_disparo.colliderect(rect_inimigo)
+
+# Função para ataque especial do Boss
+def ataque_especial_boss(jogador_posicoes, imagens_ataque, tempo_inicial, intervalo_troca, tela):
+    tempo_atual = pygame.time.get_ticks()
+    indice_imagem = (tempo_atual - tempo_inicial) // intervalo_troca
+
+    if indice_imagem < len(imagens_ataque):
+        imagem_atual = imagens_ataque[indice_imagem]
+        posicao_atual = jogador_posicoes[min(indice_imagem, len(jogador_posicoes) - 1)]
+        tela.blit(imagem_atual, posicao_atual)
+        return False  # O ataque ainda está em andamento
+    return True  # O ataque terminou
+
+#Função que escolhe as cores da barra de vida do personagem 
+def calcular_cor_barra_de_vida(porcentagem_vida):
+    if porcentagem_vida > 80:
+        return (0, 255, 0)  # Verde
+    elif porcentagem_vida > 55:
+        return (173, 255, 47)  # Verde amarelado
+    elif porcentagem_vida > 40:
+        return (255, 165, 0)  # Laranja
+    elif porcentagem_vida > 30:
+        return (255, 69, 0)  # Laranja avermelhado
+    else:
+        return (255, 0, 0)  # Vermelho
+
+#Função que desenha  a barra de vida do personagem
+def desenhar_barra_de_vida(surface, x, y, largura_total, altura, vida_atual, vida_maxima):
+    porcentagem_vida = (vida_atual / vida_maxima) * 100
+    cor_barra = calcular_cor_barra_de_vida(porcentagem_vida)
+    largura_vida = int(largura_total * (vida_atual / vida_maxima))
+    borda = pygame.Rect(x, y, largura_total, altura)
+    barra = pygame.Rect(x, y, largura_vida, altura)
+    pygame.draw.rect(surface, (0, 0,0), borda, 2)  # Borda branca
+    pygame.draw.rect(surface, cor_barra, barra)  # Cor variável
+
+#Função que desenha a barra de vida do Petro
+def desenhar_barra_de_vida_petro(surface, vida_petro, pos_x, pos_y,vida_maxima_petro):
+    # Calculando a largura da barra de vida
+    largura_barra_petro = 30 
+    altura_barra_petro = 10     
+    
+    # Calculando a porcentagem de vida restante
+    porcentagem_vida_petro = vida_petro / vida_maxima_petro
+    
+    
+    # Desenhando a parte preenchida da barra de vida (marrom)
+    barra_preenchida = pygame.Rect(pos_x, pos_y, largura_barra_petro * porcentagem_vida_petro, altura_barra_petro)
+    pygame.draw.rect(surface, (139, 69, 19), barra_preenchida)
+    
+    # Desenhando a borda da barra de vida (preta)
+    pygame.draw.rect(surface, (0, 0, 0), (pos_x, pos_y, largura_barra_petro, altura_barra_petro), 2)    
+    
 ###################################################  SONS UNIVERSAIS ################################################
 
 ####################################################  CONFIG     ######################################################
-tap_image = pygame.image.load("Sprites/Tab.png")
-tap_image = pygame.transform.scale(tap_image, (64 ,64))
-pos_x_tab = 20
-pos_y_tab = 120
 cor_contorno = (0, 0, 0)  # Preto para o contorno
 config_teclas = carregar_config_teclas()
 ####################################################  Habilidades     ######################################################

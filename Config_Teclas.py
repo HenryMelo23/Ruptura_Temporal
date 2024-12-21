@@ -5,21 +5,18 @@ import sys
 
 python = sys.executable
 
-
 def tela_de_controles(config_teclas, largura_tela, altura_tela):
 
     pygame.init()
     pygame.mouse.set_visible(False)
     padrao_config_teclas = {
-    "Mover para cima": pygame.K_w,
-    "Mover para baixo": pygame.K_s,
-    "Mover para esquerda": pygame.K_a,
-    "Mover para direita": pygame.K_d,
-    "Disparar": pygame.K_SPACE,
-    "Teleporte": pygame.K_LSHIFT,
-    "Comprar na loja": pygame.K_e,
-    "Onda": pygame.K_j,  # Adicionando "Onda"
-}
+        "Mover para cima": pygame.K_w,
+        "Mover para baixo": pygame.K_s,
+        "Mover para esquerda": pygame.K_a,
+        "Mover para direita": pygame.K_d,
+        "Teleporte": pygame.K_LSHIFT,
+        "Comprar na loja": pygame.K_e,
+    }
 
     # Garantir que todas as opções existam no dicionário carregado
     for chave, valor in padrao_config_teclas.items():
@@ -116,7 +113,7 @@ def tela_de_controles(config_teclas, largura_tela, altura_tela):
         pygame.display.flip()
         relogio.tick(60)
     config_teclas = carregar_config_teclas()
-    
+
     pygame.quit()
 
 def render_com_contorno(tela, texto, fonte, x, y, cor_texto, cor_contorno):
@@ -148,10 +145,8 @@ def carregar_config_teclas():
             "Mover para baixo": pygame.K_s,
             "Mover para esquerda": pygame.K_a,
             "Mover para direita": pygame.K_d,
-            "Disparar": pygame.K_SPACE,
             "Teleporte": pygame.K_LSHIFT,
             "Comprar na loja": pygame.K_e,
-            "Onda": pygame.K_j,
         }
 
 if __name__ == "__main__":

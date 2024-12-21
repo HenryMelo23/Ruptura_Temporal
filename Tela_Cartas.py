@@ -9,19 +9,49 @@ import time
 
 def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo, altura_disparo,trembo,dano_person_hit,chance_critico,roubo_de_vida,quantidade_roubo_vida,
                   tempo_cooldown_dash,vida_maxima,Petro_active,Resistencia,vida_petro,vida_maxima_petro,dano_petro,xp_petro,petro_evolucao,Resistencia_petro,Chance_Sorte,Poison_Active,Dano_Veneno_Acumulado,Executa_inimigo,Ultimo_Estalo,mostrar_info,Mercenaria_Active,Valor_Bonus,dispositivo_ativo,Tempo_cura,
-                    porcentagem_cura,):
+                    porcentagem_cura,cartas_compradas,pontuacao_exib):
+    
+
+    
+
     pausa = True
     DELAY_ENTRE_CARTAS = 200
     ultima_mudanca_de_carta = pygame.time.get_ticks()
     pygame.init()
     tela = pygame.display.set_mode((largura_tela, altura_tela))
     pygame.display.set_caption('Tela de Pausa')
+    valor_rolagem=250
     
-
     # Carregar a imagem de fundo e redimensioná-la para ajustar-se à tela
     background = pygame.image.load("Sprites/Cartas_back.png").convert()
     background = pygame.transform.scale(background, (largura_tela, altura_tela))
     # Define os atributos de cada carta em um dicionário
+    # Definir cores
+    cor_fundo = (30, 30, 30)
+    cor_texto = (255, 255, 255)
+    cor_contorno = (0, 0, 0)
+
+    # Definir fontes
+    fonte_titulo = pygame.font.Font(None, 38)
+    fonte_texto = pygame.font.Font(None, 26)
+    fonte_pequena = pygame.font.Font(None, 17)
+    def render_texto_com_contorno(fonte, texto, cor_texto, cor_contorno, x, y, deslocamento=2):
+        """Renderiza texto com contorno."""
+        texto_render = fonte.render(texto, True, cor_contorno)
+
+        # Desenhar o contorno ao redor
+        for dx, dy in [(-deslocamento, 0), (deslocamento, 0), (0, -deslocamento), (0, deslocamento),
+                       (-deslocamento, -deslocamento), (-deslocamento, deslocamento),
+                       (deslocamento, -deslocamento), (deslocamento, deslocamento)]:
+            tela.blit(texto_render, (x + dx, y + dy))
+
+        # Desenhar o texto principal
+        texto_principal = fonte.render(texto, True, cor_texto)
+        tela.blit(texto_principal, (x, y))
+     
+
+    
+
     atributos_cartas = [
         {"nome": "Speed Boost", "Nick": "Vento Celeste", "velocidade": 10, "descricao": "Eles estão perto demais? Corra como o vento e ganhe +10% de velocidade (acumulativo)"},
         {"nome": "Porção", "Nick": "Elixir Vital", "vida_maxima": 50, "descricao": "Precisa viver mais? Cure-se com 25% da vida máxima, excedente vira vida máxima."},
@@ -170,6 +200,8 @@ def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo,
     pygame.display.set_caption("Cartas")
     
     while pausa:
+        pos_x = largura_tela // 2 - (len(cartas_compradas) * 100) // 2  # centraliza as cartas
+        pos_y = altura_tela - 90  
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 pygame.quit()
@@ -181,7 +213,7 @@ def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo,
                     carta_selecionada_index = (carta_selecionada_index + 1) % 3
                 elif evento.key == pygame.K_SPACE:  # Tecla ESPAÇO pressionada, confirma a seleção da carta
                     carta_selecionada = cartas_selecionadas[carta_selecionada_index]
-                    
+                    valor_rolagem=250
                     if carta_selecionada["nome"] == "Speed Boost":  # Se a carta selecionada for "Speed Boost"
                         velocidade_personagem += 0.065  # Aumenta a velocidade do personagem em 2
                         cartas_compradas["Speed Boost"] += 1
@@ -260,6 +292,11 @@ def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo,
                     pausa = False  # Sai do loop quando a tecla ESPAÇO é pressionada
                 elif evento.key == pygame.K_w:  # Exibe informações da carta
                     mostrar_info = True
+                elif valor_rolagem < pontuacao_exib  and evento.key == pygame.K_q:
+                    pontuacao_exib-=250
+                    valor_rolagem+= int(valor_rolagem*0.40)
+                    cartas_selecionadas = random.sample(cartas, 3)
+
             elif evento.type == pygame.KEYUP:
                 if evento.key == pygame.K_w:  # Para de exibir informações da carta ao soltar "W"
                     mostrar_info = False    
@@ -313,14 +350,13 @@ def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo,
                         Petro_active=True
                         dano_petro+=2
                         
+                        #Usado para verificar os niveis do petro para trocar a skin dele
                         if petro_evolucao>0 and petro_evolucao<=8:
                             xp_petro = "nivel_1"
-                            
                             petro_evolucao+=4     
                         elif petro_evolucao>8 and petro_evolucao<=16:
                             xp_petro = "nivel_2"
                             vida_maxima_petro+=1000
-                            
                             petro_evolucao+=4   
                         elif petro_evolucao>16  :
                             xp_petro = "nivel_3"
@@ -375,29 +411,29 @@ def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo,
             carta_scaled = pygame.transform.scale(carta["frames_animacao"][carta["frame_atual"]],
                                               (largura_carta_scaled, altura_carta_scaled))
             # Calcula a posição de desenho considerando a escala e a distância entre as cartas
-            pos_x = posicao_inicial + i * (largura_carta + distancia_entre_cartas) - (largura_carta_scaled - largura_carta) // 2
-            tela.blit(carta_scaled, (pos_x, posicao_y))
+            pos_x_escala = posicao_inicial + i * (largura_carta + distancia_entre_cartas) - (largura_carta_scaled - largura_carta) // 2
+            tela.blit(carta_scaled, (pos_x_escala, posicao_y))
             if i == carta_selecionada_index:
                 if dispositivo_ativo == "teclado":
-                    tela.blit(icone_w, (pos_x + largura_carta // 2 - 25, posicao_y - 70))
+                    tela.blit(icone_w, (pos_x_escala + largura_carta // 2 - 25, posicao_y - 70))
                 else:
-                    tela.blit(icone_x, (pos_x + largura_carta // 2 - 25, posicao_y - 70))
+                    tela.blit(icone_x, (pos_x_escala + largura_carta // 2 - 25, posicao_y - 70))
 
 
             # Desenha o texto explicativo no centro da carta
             texto = fonte.render(carta["Nick"], True, (0, 0, 0))  # Renderiza o texto
             texto_rect = texto.get_rect(
-            center=(pos_x + largura_carta_scaled // 2, posicao_y + altura_carta_scaled // 1.5))  # Obtém o retângulo do texto
+            center=(pos_x_escala + largura_carta_scaled // 2, posicao_y + altura_carta_scaled // 1.5))  # Obtém o retângulo do texto
             tela.blit(texto, texto_rect)  # Desenha o texto na tela usando o retângulo
         if mostrar_info:
             carta_selecionada = cartas_selecionadas[carta_selecionada_index]
-            pos_x = posicao_inicial + carta_selecionada_index * (largura_carta + distancia_entre_cartas) + posicao_info_x
+            pos_x_info = posicao_inicial + carta_selecionada_index * (largura_carta + distancia_entre_cartas) + posicao_info_x
             pos_y_info = posicao_y + posicao_info_y  # Ajusta a posição com o deslocamento vertical
 
             # Desenha o quadrado branco com altura ajustada
             largura_quadrado = largura_carta
             altura_quadrado = 210
-            pygame.draw.rect(tela, (255, 255, 255), (pos_x, pos_y_info, largura_quadrado, altura_quadrado))
+            pygame.draw.rect(tela, (255, 255, 255), (pos_x_info, pos_y_info, largura_quadrado, altura_quadrado))
             
             # Divide o texto em múltiplas linhas se for muito longo
             fonte_pequena = pygame.font.Font(None, 18)  # Fonte menor
@@ -418,12 +454,12 @@ def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo,
 
             # Renderiza o nome da carta
             texto_nome = fonte.render(carta_selecionada["nome"], True, (0, 0, 0))
-            tela.blit(texto_nome, (pos_x + 10, pos_y_info + 10))
+            tela.blit(texto_nome, (pos_x_info + 10, pos_y_info + 10))
 
             # Renderiza as linhas do texto de descrição
             for i, linha in enumerate(linhas):
                 texto_linha = fonte_pequena.render(linha.strip(), True, (0, 0, 0))
-                tela.blit(texto_linha, (pos_x + 10, pos_y_info + 35 + i * 18))
+                tela.blit(texto_linha, (pos_x_info + 10, pos_y_info + 35 + i * 18))
         # Atualiza a animação das cartas
         contador_animacao += 1
         if contador_animacao >= fps_animacao:
@@ -431,10 +467,31 @@ def tela_de_pausa(velocidade_personagem, intervalo_disparo,vida,largura_disparo,
             for carta in cartas_selecionadas:
                 carta["frame_atual"] = (carta["frame_atual"] + 1) % 2
 
+
+        for nome, quantidade in cartas_compradas.items():
+            if quantidade > 0:  # Apenas renderiza cartas compradas
+                # Renderiza a imagem da carta
+                imagem_carta = cartas_imagens[nome]
+                tela.blit(imagem_carta, (pos_x, pos_y))
+                
+                # Renderiza a quantidade de cartas compradas
+                fonte = pygame.font.SysFont('Texto/Doctor Glitch.otf', 20)
+                texto = fonte.render(str(quantidade), True, (0, 0, 0))  # Cor do texto em branco
+                tela.blit(texto, (pos_x + 30, pos_y + 70))  
+                
+                # Atualiza a posição X para a próxima carta
+                pos_x += 50  # Espaço entre as cartas  
+        render_texto_com_contorno(fonte_titulo, f"Pontuação: {pontuacao_exib}", cor_texto, cor_contorno, 450, 50)
+
+        # Renderizar "Valor da Rolagem"
+        render_texto_com_contorno(fonte_texto, f"Valor da Rolagem: {valor_rolagem}", cor_texto, cor_contorno, 450, 120)
+
+        # Renderizar explicação menor
+        render_texto_com_contorno(fonte_pequena, "aumenta 40% do valor líquido (por rolagem)", cor_texto, cor_contorno, 450, 180)
         pygame.display.flip()
 
     return [velocidade_personagem, intervalo_disparo,vida,largura_disparo, altura_disparo,trembo,dano_person_hit,chance_critico,roubo_de_vida,
             quantidade_roubo_vida,tempo_cooldown_dash,vida_maxima,Petro_active,Resistencia,vida_petro,vida_maxima_petro,dano_petro,xp_petro,petro_evolucao,Resistencia_petro,
-            Chance_Sorte,Poison_Active,Dano_Veneno_Acumulado,Executa_inimigo,Ultimo_Estalo,Mercenaria_Active,Valor_Bonus,dispositivo_ativo,Tempo_cura,porcentagem_cura]
+            Chance_Sorte,Poison_Active,Dano_Veneno_Acumulado,Executa_inimigo,Ultimo_Estalo,Mercenaria_Active,Valor_Bonus,dispositivo_ativo,Tempo_cura,porcentagem_cura,cartas_compradas,pontuacao_exib]
 
 
