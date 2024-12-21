@@ -323,6 +323,13 @@ Tempo_cura=2500
 porcentagem_cura=0.005
 tempo_ultima_regeneracao=0
 
+frames_onda_cinetica = [
+    pygame.image.load(f"Sprites/Pulso_{i}.png") for i in range(1, 3)
+]
+frames_onda_cinetica = [
+    pygame.transform.scale(frame, (largura_onda, altura_onda)) for frame in frames_onda_cinetica
+]
+
 personagem_paths = {
     'up': ["Sprites/Geo1-up.png", "Sprites/Geo2-up.png"],
     'down': ["Sprites/Geo1-Down.png", "Sprites/Geo2-Down.png"],
