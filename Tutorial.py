@@ -341,11 +341,6 @@ def calcular_direcao_para_inimigo(personagem, inimigos):
 dobro_pontuacao = 15  # Quantidade de pontos necessários para dobrar a pontuação e adicionar mais inimigos
 pontuacao_dobro = dobro_pontuacao  # Inicializa a pontuação necessária para dobrar a pontuação
 
-def verificar_colisao_disparo_inimigo(pos_disparo, pos_inimigo, largura_disparo, altura_disparo, largura_inimigo, altura_inimigo,inimigos_eliminados):
-    rect_disparo = pygame.Rect(pos_disparo[0], pos_disparo[1], largura_disparo, altura_disparo)
-    rect_inimigo = pygame.Rect(pos_inimigo[0], pos_inimigo[1], largura_inimigo, altura_inimigo)
-    
-    return rect_disparo.colliderect(rect_inimigo)
 
 
 # Variável para armazenar o tempo do último inimigo adicionado
