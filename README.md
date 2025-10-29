@@ -1,4 +1,5 @@
 
+
 🚀 Ruptura Temporal
 
 🎮 Um jogo open-source desenvolvido em Python com Pygame
@@ -10,7 +11,7 @@
 Este projeto não é um jogo revolucionário nem tem um código perfeito e otimizado. Cada linha, cada fase e cada elemento foram criados como parte do meu aprendizado. É uma colcha de retalho — remendada e improvisada, mas que tem seu propósito e sentido únicos.
 
 COMO INSTALAR O JOGO SEM OS ARQUIVOS .py (PARA QUEM NÂO É DEV):
-[CLIQUE AQUI](https://github.com/HenryMelo23/Ruptura_Temporal/releases/tag/v0.0.2)
+[CLIQUE AQUI](https://github.com/HenryMelo23/Ruptura_Temporal/releases/tag/v0.0.1)
 
 
 MENU :
@@ -96,4 +97,4 @@ Gostaria de agradecer a todos que acompanharam e apoiaram o desenvolvimento dess
 Seja você um desenvolvedor iniciante ou experiente, "Ruptura Temporal" é um projeto feito para todos. Aproveite, aprenda e contribua. Vamos crescer e evoluir juntos!
 
 
->>>>>>> f14a69fb4c3db27ac64a26b4453b3fd65c2a3f2e
+
