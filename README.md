@@ -81,7 +81,7 @@ Essa escolha pode ser feita antes do início da fase, tanto no modo Offline quan
 
   Áurea Impulsiva
   <div style="text-align: center;">
-    <img src="Sprites/Git/aurea_impulsiva.png" alt="Áurea Impulsiva" width="500" />
+    <img src="Sprites/aurea_impulsiva.png" alt="Áurea Impulsiva" width="500" />
   </div>
   "A fúria é o combustível da vitória."
 
@@ -92,7 +92,7 @@ Essa escolha pode ser feita antes do início da fase, tanto no modo Offline quan
 
   Áurea Vanguarda
   <div style="text-align: center;">
-    <img src="Sprites/Git/aurea_vanguarda.png" alt="Áurea Vanguarda" width="500" />
+    <img src="Sprites/aurea_vanguarda.png" alt="Áurea Vanguarda" width="500" />
   </div>
 
   "A dor também é uma arma."
@@ -103,7 +103,7 @@ Essa escolha pode ser feita antes do início da fase, tanto no modo Offline quan
 
   Áurea Devota
   <div style="text-align: center;">
-    <img src="Sprites/Git/aurea_devota.png" alt="Áurea Devota" width="500" />
+    <img src="Sprites/aurea_devota.png" alt="Áurea Devota" width="500" />
   </div>
   "Fé é escudo."
 
@@ -196,5 +196,6 @@ que possibilitaram a expansão do projeto para um ambiente multiplayer e a conso
 Seja você um desenvolvedor iniciante ou experiente, "Ruptura Temporal" é um projeto feito para todos. Aproveite, aprenda e contribua. Vamos crescer e evoluir juntos!
 
 📦 Versão Atual: Ruptura Temporal – Beta (Offline + LAN)
+
 
 
