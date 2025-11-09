@@ -551,9 +551,7 @@ def tela_upgrade_aureas(tela, fonte, moedas_disponiveis):
                             upgrades[nome] += 1
                             moedas_disponiveis -= 1
                             salvar_upgrade_aureas("aureas_upgrade.json", upgrades)
-                            print(f"[⚙️] {nome} melhorada para nível {upgrades[nome]}")
-                        else:
-                            print("[⛔] Sem moedas suficientes.")
+
                 elif evento.key == pygame.K_ESCAPE:
                     return
 
@@ -918,7 +916,6 @@ while running:
             moedas_coletadas += 1
             moedas_totais += 1   # 🪙 acumula no total salvo
             moedas_soltadas.remove(moeda)
-            print(f"[💰] Moeda coletada! Total: {moedas_totais}")
             salvar_atributos()   # 💾 salva imediatamente
     nova_lista = []
     for efeito in efeitos_texto:
@@ -1696,7 +1693,6 @@ while running:
                     dano_fogo = int(vida_maxima * proporcao_escalada)
 
                     inimigo["vida"] -= dano_fogo
-                    print(f"[🔥 DANO] Inimigo {i_id} queimando: -{dano_fogo}")
 
                     efeitos_texto.append({
                         "texto": f"-{dano_fogo}",

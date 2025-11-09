@@ -49,8 +49,10 @@ ultima_vida_enviada= 0
 pronto_para_comecar= False
 estado_jogo= "Rodando"
 conn = None  # <- adiciona isso no topo, antes dos if
-
-
+direcao_atual_p2= "Down"
+convite_boss_ativo= False
+iniciar_boss= False
+Safe=False
 
 ########################################## VARIAVEIS MAPA
 cont=1

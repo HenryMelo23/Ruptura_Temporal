@@ -503,7 +503,7 @@ def soltar_moeda(posicao):
             "rect": rect,
             "image": sprite_redimensionada
         })
-        print(f"[🪙] Moeda criada em {rect.topleft}, tamanho: {tamanho_moeda}")
+
 
 def tela_upgrade_aureas(tela, fonte, moedas_disponiveis):
     
@@ -554,7 +554,7 @@ def tela_upgrade_aureas(tela, fonte, moedas_disponiveis):
                             upgrades[nome] += 1
                             moedas_disponiveis -= 1
                             salvar_upgrade_aureas("aureas_upgrade.json", upgrades)
-                            print(f"[⚙️] {nome} melhorada para nível {upgrades[nome]}")
+
 
                             # 🪙 salva o novo total no arquivo de atributos
                             with open("atributos.json", "r") as f:
@@ -562,8 +562,7 @@ def tela_upgrade_aureas(tela, fonte, moedas_disponiveis):
                             atributos["moedas_totais"] = moedas_disponiveis
                             with open("atributos.json", "w") as f:
                                 json.dump(atributos, f)
-                        else:
-                            print("[⛔] Sem moedas suficientes.")
+
                 elif evento.key == pygame.K_ESCAPE:
                     return
 
@@ -1049,7 +1048,6 @@ while running:
             moedas_coletadas += 1
             moedas_totais += 1   # 🪙 acumula no total salvo
             moedas_soltadas.remove(moeda)
-            print(f"[💰] Moeda coletada! Total: {moedas_totais}")
             salvar_atributos()   # 💾 salva imediatamente
 
     nova_lista = []

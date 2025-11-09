@@ -48,4 +48,3 @@ def carregar_upgrade_aureas(caminho):
 
 
     return upgrades
-print("oi")
