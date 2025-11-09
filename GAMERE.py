@@ -257,7 +257,7 @@ if modo == "join":
 
 inimigos_comum = []
 #inicializa a Threading
-if modo == "host" :
+if modo == "host" and not Safe :
     tempo_anterior = pygame.time.get_ticks()
     tempo_movimento = random.randint(2000, 7000)
     tempo_parado = random.randint(500, 700) 
@@ -1560,7 +1560,7 @@ while running:
     else:
         imune_tempo_restante = 0 
 
-    if not jogador_morto:  # Só pode tomar dano se estiver vivo 
+    if not jogador_morto and not Safe:  # Só pode tomar dano se estiver vivo 
         if verificar_colisao_personagem_inimigo(personagem_rect, inimigos_rects) and imune_tempo_restante <= 0:
 
             if tempo_atual - tempo_ultimo_hit_inimigo >= intervalo_hit_inimigo:
@@ -2274,7 +2274,7 @@ while running:
 
             # Envia pro client abrir loja também
             fila_envio.put({"abrir_loja": True, "quantidade_cartas": max_cartas})
-    
+            Safe=True
             ret = tela_de_pausa(velocidade_personagem, intervalo_disparo, vida, largura_disparo, altura_disparo,
                                 trembo, dano_person_hit, chance_critico, roubo_de_vida, quantidade_roubo_vida,
                                 tempo_cooldown_dash, vida_maxima, Petro_active, Resistencia, vida_petro,
@@ -2318,6 +2318,7 @@ while running:
             # após sair da loja, avisa o outro lado
             fila_envio.put({"abrir_loja": False})
             tela_de_espera_host(tela, fila_envio, fila_recebimento)
+            Safe=False
 
         
 
