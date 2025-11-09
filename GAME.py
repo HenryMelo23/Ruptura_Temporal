@@ -1203,7 +1203,6 @@ while running:
                     vida_petro -= int(dano_boss)
                     vida_petro+= int(vida_maxima_petro-vida_petro)*quantidade_roubo_vida
                     vida_boss-= int(dano_person_hit*0.15)+15
-                    0
                     # Aqui você pode adicionar outras ações relacionadas ao dano ao "boss"
                     tempo_anterior_petro = tempo_atual_petro
 
