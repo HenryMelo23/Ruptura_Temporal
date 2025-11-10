@@ -463,6 +463,15 @@ def soltar_moeda(posicao):
         })
 
 def tela_upgrade_aureas(tela, fonte, moedas_disponiveis):
+    if not os.path.exists("aureas_upgrade.json"):
+        dados_iniciais = {
+            "Racional": 0,
+            "Impulsiva": 0,
+            "Devota": 0,
+            "Vanguarda": 0
+        }
+        with open("aureas_upgrade.json", "w") as f:
+            json.dump(dados_iniciais, f, indent=4)
     
     with open("aureas_upgrade.json", "r") as f:
         upgrades = json.load(f)
