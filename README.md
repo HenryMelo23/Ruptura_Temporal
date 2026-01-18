@@ -147,16 +147,16 @@ A arquitetura segue o modelo **cliente-servidor**, onde o Host é responsável p
     Objetivo
 O projeto tem o propósito de:
 
-🌐 Implementar comunicação em rede: integrar conceitos de redes de computadores a um ambiente de jogo, aplicando sockets TCP e lógica de sincronização de estado em tempo real.
+Implementar comunicação em rede: integrar conceitos de redes de computadores a um ambiente de jogo, aplicando sockets TCP e lógica de sincronização de estado em tempo real.
 
-📘 Compartilhar conhecimento: Tornar o código aberto e acessível para que qualquer pessoa possa aprender junto comigo.
+Compartilhar conhecimento: Tornar o código aberto e acessível para que qualquer pessoa possa aprender junto comigo.
 
-🎨 Criar algo único e pessoal: Transformar a ideia inicial em algo que todos possam aproveitar e modificar.
+Criar algo único e pessoal: Transformar a ideia inicial em algo que todos possam aproveitar e modificar.
 
-🕹️ Contribuir para a comunidade: Oferecer diversão e aprendizado para quem quiser entrar no mundo do desenvolvimento de jogos.
+Contribuir para a comunidade: Oferecer diversão e aprendizado para quem quiser entrar no mundo do desenvolvimento de jogos.
 
 
-🔍 Como Contribuir
+Como Contribuir
 
 Caso deseje contribuir com o projeto "Ruptura Temporal", sinta-se livre para:
 
@@ -177,17 +177,17 @@ Este projeto está licenciado sob a Creative Commons Attribution-NonCommercial-S
 
 Direitos e Restrições:
 
-🚫 Uso Comercial Proibido: Não é permitido usar o projeto para fins comerciais sem autorização explícita.
+Uso Comercial Proibido: Não é permitido usar o projeto para fins comerciais sem autorização explícita.
 
-🔄 Modificação e Redistribuição: Permite modificar e redistribuir o projeto, desde que atribua ao autor original e mantenha a mesma licença Creative Commons.
+Modificação e Redistribuição: Permite modificar e redistribuir o projeto, desde que atribua ao autor original e mantenha a mesma licença Creative Commons.
 
-📜 Agradecimentos
+Agradecimentos
 
 Gostaria de agradecer a todos que acompanharam e apoiaram o desenvolvimento desse projeto. A ideia inicial era algo pessoal, mas graças ao apoio da comunidade, o projeto cresceu e se tornou algo maior. Espero que este projeto ajude a inspirar e ensinar aqueles que querem aprender a criar jogos e explorar o desenvolvimento em Python com o Pygame, Também agradeço à Universidade de Brasília e à disciplina de **Redes de Computadores e Comunicação de Dados**,  
 que possibilitaram a expansão do projeto para um ambiente multiplayer e a consolidação desta versão Beta.
 
 
-✨ Links e Contatos
+Links e Contatos
 
 - **Instagram:** [@henri_meelo](https://www.instagram.com/henri_meelo/)
   
@@ -195,7 +195,8 @@ que possibilitaram a expansão do projeto para um ambiente multiplayer e a conso
 
 Seja você um desenvolvedor iniciante ou experiente, "Ruptura Temporal" é um projeto feito para todos. Aproveite, aprenda e contribua. Vamos crescer e evoluir juntos!
 
-📦 Versão Atual: Ruptura Temporal – Beta (Offline + LAN)
+Versão Atual: Ruptura Temporal – Beta (Offline + LAN)
+
 
 
 
