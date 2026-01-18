@@ -662,15 +662,7 @@ while running:
                 multiplicador_dano = 1.3 + (0.05 * nivel_impulsiva)
             elif tipo_buff_impulsiva == "velocidade":
                 multiplicador_velocidade = 1.2 + (0.05 * nivel_impulsiva)
-        mensagem = "+ Buff: Dano ↑" if tipo_buff_impulsiva == "dano" else "+ Buff: Velocidade ↑"
-
-        efeitos_texto.append({
-            "texto": mensagem,
-            "x": pos_x_personagem,
-            "y": pos_y_personagem - 20,
-            "tempo_inicio": pygame.time.get_ticks(),
-            "cor": (255, 100, 100) if tipo_buff_impulsiva == "dano" else (100, 100, 255)
-        })
+        
 
 
     pos_mouse = pygame.mouse.get_pos()
@@ -910,6 +902,7 @@ while running:
             tempo_movimento = random.randint(3000, 7000)
         # Atualizar movimento dos inimigos com previsão
         tempo_previsao = 5  # Tempo em quadros para prever o movimento
+        print( pos_x_personagem, pos_y_personagem)
         atualizar_movimento_inimigos(
         inimigos_comum, pos_x_personagem, pos_y_personagem, ultima_tecla_movimento, velocidade_personagem, tempo_previsao
         )

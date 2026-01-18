@@ -16,6 +16,7 @@ mapa_path1 = "Sprites/Fase1.png"
 mapa_path2 = "Sprites/Fase2.png"
 mapa_path3 = "Sprites/Fase3.png"
 mapa_path4 = "Sprites/Fase4.png"
+mapa_path5 = "Sprites/Fase5-1.png"
 python = sys.executable
 cooldown_ativo_img = pygame.transform.scale(pygame.image.load("Sprites/cooldown2.png"), (50, 50))
 cooldown_concluido_img = pygame.transform.scale(pygame.image.load("Sprites/cooldown.png"), (50, 50))
@@ -255,6 +256,7 @@ pos_y_barra_boss3 = altura_tela // 4 - altura_barra_boss // 1.3
 Boss_vivo3=True
 
 
+
 #########################################  Condicionais
 # Variável para armazenar a pontuação
 pontuacao = 0
@@ -307,7 +309,7 @@ elif largura_tela == 1920:
     vel_inimig= 1
 elif largura_tela <= 1360:
     vel_inimig= 1
-Velocidade_Inimigos_1=1.3
+Velocidade_Inimigos_1=1.5
 max_inimigos=6
 max_inimigos2=4
 max_inimigos3=5
@@ -369,6 +371,88 @@ tempo_ultima_regeneracao=0
 inimigos_em_chamas = {}  # id(inimigo): tempo_inicio
 duracao_incendio_vanguarda = 5000  # 5 segundos
 
+########################################## BOSS 5 (GEO-UMBRA)
+# --- MEMÓRIA PERSISTENTE DA GEO-UMBRA (REVISADA) ---
+
+
+direcao_boss = 'stop'
+estado_atual_ia = {
+    'ultimo_ataque': 0, 
+    'intervalo': 1000, 
+    'projeteis': [], 
+    'confianca': 0.5,
+    'lead': 0.8, 
+    'erros_d': 0, 
+    'fase_tele': "espera", 
+    'proj_tele': None,
+    'dano_recente': 0, 
+    'ultimo_teleporte': 0, 
+    'furia_fase': "espera",
+    'ultimo_furia': 0, 
+    'angulo_furia': 0, 
+    'centro_mapa': (largura_mapa // 2, altura_mapa // 2),
+    'f_fuga_x': 0, 
+    'f_fuga_y': 0, 
+    'parede_ativa': False,
+    'ultimo_parede': 0, 
+    'ultimo_tick_cura': 0,
+    
+    # --- NOVAS CHAVES DE NAVEGAÇÃO AUTÔNOMA ---
+    'alvo_ia': (largura_mapa // 2, altura_mapa // 2), # Inicia olhando para o centro
+    'ultimo_alvo_tempo': 0,
+    'vel_x': 0,
+    'vel_y': 0
+}
+estado_atual_ia['parede_ativa'] = False
+estado_atual_ia['ultimo_sifon_fim'] = 0  # Crucial para o cooldown tático
+historico_posicao_player = [] 
+vida_maxima_umbra = 3000
+vida_umbra = vida_maxima_umbra
+projeteis_boss = []
+tempo_ultimo_ataque_boss = 0
+velocidade_tiro_boss = 7
+projetil_teleporte = None
+fase_teleporte = "espera" 
+dano_recente_boss = 0
+tempo_ultimo_reset_dano = 0
+distancia_player_boss = 0
+intervalo_boss = 4000              # Cooldown inicial (2 segundos)
+tempo_ultimo_teleporte_boss = 0  # Marco zero do teleporte
+# --- CÉREBRO ADAPTATIVO (Sincronizado) ---
+erros_preditivos = 0
+erros_diretos = 0
+confianca_predicao = 0.6  # 60% de chance inicial de prever o futuro
+ajuste_lead = 0.6         # Multiplicador de antecipação inicial
+# Define o tamanho boss 5 (1.5x)
+largura_boss, altura_boss = int(largura_personagem * 1.2), int(altura_personagem * 1.2)
+largura_escudo, altura_escudo = int(largura_boss * 1.4), int(altura_boss * 1.4)
+ultimo_parede_tempo = pygame.time.get_ticks()
+parede_ativa = False
+parede_rect = None
+raio_aura_protecao = 95
+tempo_ultimo_parede_boss = 0 # Variável global que mantém a memória
+# --- ESTADOS INICIAIS DO BOSS 5 ---
+moedas_totais=0
+direcao_boss = 'stop'
+frame_boss = 0
+tempo_passado_boss = 0
+pos_x_umbra = (largura_mapa // 2) - (largura_boss // 2)
+pos_y_umbra = (altura_mapa // 2) - (altura_boss // 2)
+boss_final_ativo = True
+tempo_ultimo_dano_boss = 0
+fase_furia = "espera"
+tempo_ultima_furia = pygame.time.get_ticks()
+angulo_espiral = 0
+forca_fuga_x, forca_fuga_y = 0, 0
+erros_player_contagem = 0
+estado_mov_umbra = {
+    'alvo_x': pos_x_umbra,
+    'alvo_y': pos_y_umbra,
+    'ultimo_alvo_tempo': 0,
+    'dano_recente': 0,
+    'ultimo_desvio_boss': 0 # Novo controle de decisão
+}
+modo_atual = "GHOST"
 
 frames_onda_cinetica = [
     pygame.image.load(f"Sprites/Pulso_{i}.png") for i in range(1, 3)
@@ -387,6 +471,12 @@ personagem_paths = {
     'right': ["Sprites/Geo1-Dir.png", "Sprites/Geo2-Dir.png"],
     'stop': ["Sprites/Geo1-somb.png", "Sprites/Geo2-somb.png"],
     'disp' :["Sprites/Geo_Disp1.png", "Sprites/Geo_Disp2.png"]
+}
+
+geo_umbra_paths = {
+    'stop': ["Sprites/Geo-Umbra-V2-1.png", "Sprites/Geo-Umbra-V2-2.png"],
+    'damage': ["Sprites/Geo-Umbra-V2-1-dano.png", "Sprites/Geo-Umbra-V2-2-dano.png"],
+    'escudo': ["Sprites/Geo_Umbra_Escudo-1.png", "Sprites/Geo_Umbra_Escudo-2.png"] # Adicionado aqui, senhor.
 }
 
 personagem_paths2 = {
@@ -487,6 +577,15 @@ frames_animacao = {direcao: [pygame.transform.scale(frame, (largura_personagem, 
 frames_animacao['stop'] = [pygame.image.load(path) for path in personagem_paths['stop']]
 frames_animacao['stop'] = [pygame.transform.scale(frame, (largura_personagem, altura_personagem)) for frame in frames_animacao['stop']]
 
+# Carregar e escalar seguindo o seu padrão
+frames_geo_umbra_paths = {direcao: [pygame.image.load(path) for path in paths] for direcao, paths in geo_umbra_paths.items()}
+frames_geo_umbra_paths = {
+    direcao: [
+        pygame.transform.scale(frame, (largura_escudo, altura_escudo)) if direcao == 'escudo' 
+        else pygame.transform.scale(frame, (largura_boss, altura_boss)) 
+        for frame in frames
+    ] for direcao, frames in frames_geo_umbra_paths.items()
+}
 
 ###############################################
 
