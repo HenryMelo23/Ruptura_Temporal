@@ -596,7 +596,7 @@ while running:
             # Resetamos o cooldown e simulamos dano crítico para forçar o Grafo
             estado_atual_ia['ultimo_teleporte'] = 0
             estado_atual_ia['dano_recente'] = 500
-            print(" [DEBUG] Induzindo Teleporte de Pânico...")
+
     # Verificar eventos de joystick
     joystick_count = pygame.joystick.get_count()
     if joystick_count > 0:
@@ -753,9 +753,12 @@ while running:
         agora = pygame.time.get_ticks()
         if 'tempo_start_boss' not in estado_atual_ia:
             estado_atual_ia['tempo_start_boss'] = agora
+            estado_atual_ia['ultimo_ataque'] = agora
+            estado_atual_ia['ultimo_teleporte'] = agora
+            estado_atual_ia['ultimo_sifao'] = agora
         
         luta_iniciada = (agora - estado_atual_ia['tempo_start_boss']) >= 10000
-
+        ataque_liberado = (agora - estado_atual_ia['tempo_start_boss']) >= 13000
         # Criamos o dicionário que o 'processar_ia_umbra' espera
         boss_pos_ia = {
             'x': pos_x_umbra,
@@ -768,16 +771,24 @@ while running:
             'vida_max': vida_maxima_umbra,
             'erros': erros_player_contagem
         }
+        # No exato frame em que a luta começa, resetamos os timers para o 'agora' atual
+        if luta_iniciada and not estado_atual_ia.get('timers_sincronizados'):
+            estado_atual_ia['ultimo_ataque'] = agora
+            estado_atual_ia['ultimo_teleporte'] = agora
+            estado_atual_ia['ultimo_sifao'] = agora
+            estado_atual_ia['timers_sincronizados'] = True # Trava para não resetar mais
+
         # A cada segundo de sobrevivência, a IA recebe um pequeno incentivo
         if luta_iniciada:
             if agora - estado_atual_ia.get('ultimo_reforço_positivo', 0) >= 1000:
                 memoria_umbra.treinar(0.1)
                 estado_atual_ia['ultimo_reforço_positivo'] = agora
             # --- 2. CHAMADA DO CÉREBRO (O GRAFO) ---
-            estado_atual_ia = hb.processar_ia_umbra(
-                agora, boss_pos_ia, player_pos_data, 
-                [], disparos, estado_atual_ia, dados_p,memoria_umbra
-            )
+            if ataque_liberado:
+                estado_atual_ia = hb.processar_ia_umbra(
+                    agora, boss_pos_ia, player_pos_data, 
+                    [], disparos, estado_atual_ia, dados_p,memoria_umbra
+                )
 
             # --- 3. HIERARQUIA DE MOVIMENTAÇÃO (O IF CORRIGIDO) ---
             if estado_atual_ia.get('parede_ativa'):
@@ -822,8 +833,7 @@ while running:
                         estado_atual_ia['fase_tele'] = "espera"
                         estado_atual_ia['proj_tele'] = None
                         estado_atual_ia['dano_recente'] = 0 
-                        print(f" [TECNOLOGIA] Salto Dimensional concluído para {sinal['target_pos']}")
-            
+
             else:
                 # SÓ SE MOVE NORMALMENTE SE NÃO ESTIVER TELEPORTANDO
                 # Isso impede que o movimento normal 'puxe' a boss de volta durante o salto
@@ -898,7 +908,7 @@ while running:
             for p in estado_atual_ia['projeteis']:
                 if p["rect"].colliderect(hitbox_player):
 
-                    vida -= 100
+                    vida -= 25
                     memoria_umbra.treinar(1.5) # Recompensa alta por acerto tático
                     estado_atual_ia['projeteis'].remove(p)
          # Renderização Final da Boss
@@ -926,41 +936,41 @@ while running:
         
         atingiu_boss = False
         interceptado = False
+        if luta_iniciada:
+            if disparo["rect"].colliderect(hitbox_boss5):
 
-        if disparo["rect"].colliderect(hitbox_boss5):
+                if random.random() <= chance_critico:
+                    dano_final = dano_person_hit * 3
+                    cor_feedback = (255, 255, 0) # Amarelo Crítico
+                else:
+                    dano_final = dano_person_hit
+                    cor_feedback = (255, 255, 255) # Branco Normal
 
-            if random.random() <= chance_critico:
-                dano_final = dano_person_hit * 3
-                cor_feedback = (255, 255, 0) # Amarelo Crítico
-            else:
-                dano_final = dano_person_hit
-                cor_feedback = (255, 255, 255) # Branco Normal
+                # Se o escudo (parede_ativa) estiver ligado, reduzimos o dano em 25%
+                if estado_atual_ia.get('parede_ativa'):
+                    dano_final *= 0.75
+                    cor_feedback = (0, 200, 255) # Azul de Escudo
 
-            # Se o escudo (parede_ativa) estiver ligado, reduzimos o dano em 25%
-            if estado_atual_ia.get('parede_ativa'):
-                dano_final *= 0.75
-                cor_feedback = (0, 200, 255) # Azul de Escudo
+                # Aplicação de Dano e Treino
+                if vida_umbra > 0:
+                    vida_umbra -= dano_final
+                    memoria_umbra.treinar(-1.0)
+                    
+                    # Ativação de Veneno Preditivo (Igual ao Boss 1)
+                    if not boss_envenenado and Poison_Active:
+                        boss_envenenado = True
+                        dano_por_tick_veneno_boss = vida_maxima_umbra * (Dano_Veneno_Acumulado / 100)
+                        ultimo_tick_veneno_boss = agora
 
-            # Aplicação de Dano e Treino
-            if vida_umbra > 0:
-                vida_umbra -= dano_final
-                memoria_umbra.treinar(-1.0)
-                
-                # Ativação de Veneno Preditivo (Igual ao Boss 1)
-                if not boss_envenenado and Poison_Active:
-                    boss_envenenado = True
-                    dano_por_tick_veneno_boss = vida_maxima_umbra * (Dano_Veneno_Acumulado / 100)
-                    ultimo_tick_veneno_boss = agora
-
-            # Feedback Visual e Limpeza
-            efeitos_texto.append({
-                "texto": f"-{int(dano_final)}",
-                "x": hitbox_boss5.centerx + random.randint(-20, 20),
-                "y": hitbox_boss5.top - 10,
-                "tempo_inicio": agora,
-                "cor": cor_feedback
-            })
-            atingiu_boss = True
+                # Feedback Visual e Limpeza
+                efeitos_texto.append({
+                    "texto": f"-{int(dano_final)}",
+                    "x": hitbox_boss5.centerx + random.randint(-20, 20),
+                    "y": hitbox_boss5.top - 10,
+                    "tempo_inicio": agora,
+                    "cor": cor_feedback
+                })
+                atingiu_boss = True
 
         # 5. Manutenção de Projéteis no Mapa
         dentro_mapa = 0 <= disparo["rect"].x < largura_mapa and 0 <= disparo["rect"].y < altura_mapa

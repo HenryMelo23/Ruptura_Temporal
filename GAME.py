@@ -393,7 +393,7 @@ def criar_inimigo(x, y, tipo=1):
 
     rect = pygame.Rect(x + offset_x, y + offset_y, largura_hitbox, altura_hitbox)
     
-    return {"rect": rect, "image": image, "tipo": tipo, "vida": vida_inimigo_maxima, "vida_maxima": vida_inimigo_maxima}
+    return {"rect": rect, "image": image, "tipo": tipo, "vida": vida_inimigo_maxima, "vida_maxima": vida_inimigo_maxima, "pos_x": float(x + offset_x),"pos_y": float(y + offset_y)}
 
 
 def gerar_inimigo():
@@ -848,7 +848,8 @@ while running:
                     dano_inimigo_longe += 0.04 + nivel_ameaca * 0.02
                     dano_boss += 0.025 + nivel_ameaca * 0.02
                     Dano_Boss_Habilit += 0.05 + nivel_ameaca * 0.03
-                    Velocidade_Inimigos_1 += 0.0015 + nivel_ameaca * 0.0005
+                    incremento = 0.0012 + (nivel_ameaca * 0.0004)
+                    Velocidade_Inimigos_1 = min(3.5, Velocidade_Inimigos_1 + incremento)
 
                     inimigos_eliminados += 1
 
@@ -902,10 +903,10 @@ while running:
             tempo_movimento = random.randint(3000, 7000)
         # Atualizar movimento dos inimigos com previsão
         tempo_previsao = 5  # Tempo em quadros para prever o movimento
-        print( pos_x_personagem, pos_y_personagem)
         atualizar_movimento_inimigos(
-        inimigos_comum, pos_x_personagem, pos_y_personagem, ultima_tecla_movimento, velocidade_personagem, tempo_previsao
+        inimigos_comum, pos_x_personagem, pos_y_personagem, ultima_tecla_movimento, velocidade_personagem, tempo_previsao,movimento_pressionado
         )
+        movimento_pressionado = False
     else:
         if tempo_atual - tempo_anterior >= tempo_parado:
             # Atualize o tempo anterior para o tempo atual
@@ -1476,7 +1477,8 @@ while running:
                     dano_inimigo_longe += 0.04 + nivel_ameaca * 0.02
                     dano_boss += 0.03 + nivel_ameaca * 0.02
                     Dano_Boss_Habilit += 0.05 + nivel_ameaca * 0.03
-                    Velocidade_Inimigos_1 += 0.0015 + nivel_ameaca * 0.0005
+                    incremento = 0.0012 + (nivel_ameaca * 0.0004)
+                    Velocidade_Inimigos_1 = min(3.5, Velocidade_Inimigos_1 + incremento)
 
                     inimigos_eliminados += 1
 
@@ -1519,7 +1521,8 @@ while running:
                     dano_inimigo_longe += 0.03 + nivel_ameaca * 0.02
                     dano_boss += 0.04 + nivel_ameaca * 0.02
                     Dano_Boss_Habilit += 0.05 + nivel_ameaca * 0.03
-                    Velocidade_Inimigos_1 += 0.0015 + nivel_ameaca * 0.0005
+                    incremento = 0.0012 + (nivel_ameaca * 0.0004)
+                    Velocidade_Inimigos_1 = min(3.5, Velocidade_Inimigos_1 + incremento)
 
                     inimigos_eliminados += 1
 

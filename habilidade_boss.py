@@ -72,7 +72,7 @@ def node_ataque_direcionado(agora, estado_ia, bx, by, px, py, historico_player, 
     Nódulo de Ofensiva Visionária: Integra predição física com aprendizado generativo.
     """
     # 1. VALIDAÇÃO DE CADÊNCIA (COOLDOWN)
-    if agora - estado_ia.get('ultimo_attack', 0) >= estado_ia.get('intervalo', 1000):
+    if agora - estado_ia.get('ultimo_attack', 0) >= estado_ia.get('intervalo', 1900):
         
         # 2. CÁLCULO FÍSICO DO TEMPO DE VOO
         distancia = math.hypot(px - bx, py - by)
@@ -254,7 +254,7 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
     }
 
     # Lógica de Teleporte: Apenas define o peso estratégico
-    if agora - estado_ia.get('ultimo_teleporte', 0) >= 6200:
+    if agora - estado_ia.get('ultimo_teleporte', 0) >= 10000:
         pesos["TELEPORTE"] = 1.8
         if estado_ia.get('dano_recente', 0) > 400:
             pesos["TELEPORTE"] = 4.0
@@ -262,7 +262,7 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
     # Lógica de Sifon (Gatilhos de Saúde e Dano)
     # Garante que o cooldown de 20s seja respeitado após o FIM da última ativação
     tempo_pos_sifon = agora - estado_ia.get('ultimo_sifon_fim', 0)
-    if tempo_pos_sifon >= 20000 or estado_ia.get('ultimo_sifon_fim') == 0:
+    if tempo_pos_sifon >= 25000 or estado_ia.get('ultimo_sifon_fim') == 0:
         vida_perc = config_boss.get('vida_atual', 1600) / config_boss.get('vida_max', 1600)
         dano_acumulado = estado_ia.get('dano_recente', 0)
 

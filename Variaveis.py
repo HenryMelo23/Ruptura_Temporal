@@ -309,7 +309,7 @@ elif largura_tela == 1920:
     vel_inimig= 1
 elif largura_tela <= 1360:
     vel_inimig= 1
-Velocidade_Inimigos_1=1.5
+Velocidade_Inimigos_1=0.9
 max_inimigos=6
 max_inimigos2=4
 max_inimigos3=5
@@ -906,21 +906,27 @@ def calcular_posicao_prevista(pos_x, pos_y, direcao, velocidade, tempo_previsao)
         pos_x += velocidade * tempo_previsao
     return pos_x, pos_y
 
-def atualizar_movimento_inimigos(inimigos, pos_x_personagem, pos_y_personagem, direcao_jogador, velocidade_personagem, tempo_previsao):
+def atualizar_movimento_inimigos(inimigos, pos_x_p, pos_y_p, direcao_j, vel_p, tempo_p, movendo_agora):
     for inimigo in inimigos:
-        # Calcular a posição prevista do jogador
-        pos_prevista_x, pos_prevista_y = calcular_posicao_prevista(
-            pos_x_personagem, pos_y_personagem, direcao_jogador, velocidade_personagem, tempo_previsao
-        )
+        # Cálculo da posição prevista (Alvo)
+        if movendo_agora:
+            alvo_x, alvo_y = calcular_posicao_prevista(pos_x_p, pos_y_p, direcao_j, vel_p, tempo_p)
+        else:
+            alvo_x, alvo_y = pos_x_p, pos_y_p
         
-        # Calcular a direção para a posição prevista
-        dx = pos_prevista_x - inimigo["rect"].x
-        dy = pos_prevista_y - inimigo["rect"].y
+        # Cálculo vetorial usando a MEMÓRIA DECIMAL (pos_x/pos_y)
+        dx = alvo_x - inimigo["pos_x"]
+        dy = alvo_y - inimigo["pos_y"]
         distancia = math.sqrt(dx**2 + dy**2)
 
-        if distancia > 0:  # Evitar divisão por zero
-            inimigo["rect"].x += (dx / distancia) * Velocidade_Inimigos_1
-            inimigo["rect"].y += (dy / distancia) * Velocidade_Inimigos_1
+        if distancia > 0:
+            # 1. Movimentação suave com sub-pixel precision
+            inimigo["pos_x"] += (dx / distancia) * Velocidade_Inimigos_1
+            inimigo["pos_y"] += (dy / distancia) * Velocidade_Inimigos_1
+            
+            # 2. Sincronização obrigatória com o RECT (Inteiro) para renderização
+            inimigo["rect"].x = int(inimigo["pos_x"])
+            inimigo["rect"].y = int(inimigo["pos_y"])
 
 def calcular_angulo_disparo(posicao_jogador, posicao_mouse):
     dx = posicao_mouse[0] - posicao_jogador[0]
