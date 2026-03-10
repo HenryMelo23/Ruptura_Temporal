@@ -5,6 +5,7 @@ import random
 import sys
 import time
 import math
+import os
 from Config_Teclas import  carregar_config_teclas
 config_teclas = carregar_config_teclas()
 
@@ -253,7 +254,7 @@ largura_barra_boss3 = 20
 altura_barra_boss3 = 200
 pos_x_barra_boss3 = largura_mapa - 30
 pos_y_barra_boss3 = altura_tela // 4 - altura_barra_boss // 1.3
-Boss_vivo3=True
+Boss_vivo3= False
 
 
 
@@ -403,10 +404,43 @@ estado_atual_ia = {
     'vel_x': 0,
     'vel_y': 0
 }
+mapas_disponiveis = [ mapa_path1, mapa_path2, mapa_path3, mapa_path4]
+trauma_umbra_acumulado = 0
+
+# --- SISTEMA DE PARTÍCULAS DO VÓRTICE DE GELO (FASE 2) ---
+# Criação de superfícies pré-renderizadas para performance (flocos de neve)
+floco_superficie = pygame.Surface((4, 4), pygame.SRCALPHA)
+pygame.draw.circle(floco_superficie, (255, 255, 255, 230), (2, 2), 2)
+
+cristal_superficie = pygame.Surface((6, 6), pygame.SRCALPHA)
+# Desenha um pequeno losango azulado para parecer gelo
+pygame.draw.polygon(cristal_superficie, (100, 230, 255, 200), [(3, 0), (6, 3), (3, 6), (0, 3)])
+
+largura_mascara = int(largura_mapa * 3)
+altura_mascara = int(altura_mapa * 3)
+centro_mascara = (largura_mascara // 2, altura_mascara // 2)
+raio_visao = 110 
+
+img_cegueira = pygame.Surface((largura_mascara, altura_mascara), pygame.SRCALPHA)
+img_cegueira.fill((0, 0, 0, 245)) 
+
+pygame.draw.circle(img_cegueira, (0, 0, 0, 0), centro_mascara, raio_visao)
+
+for i in range(25):
+    alfa_borda = int(245 * (i / 25))
+    pygame.draw.circle(img_cegueira, (0, 0, 0, alfa_borda), centro_mascara, raio_visao + i, 2)
+
+em_transicao_mapa = False
+inicio_transicao_mapa = 0
+duracao_transicao_mapa = 600
+mapa_antigo = None
+mapa_novo = None
+blocos_transicao = []
+tamanho_bloco_transicao = 40
 estado_atual_ia['parede_ativa'] = False
 estado_atual_ia['ultimo_sifon_fim'] = 0  # Crucial para o cooldown tático
 historico_posicao_player = [] 
-vida_maxima_umbra = 3000
+vida_maxima_umbra = 5000
 vida_umbra = vida_maxima_umbra
 projeteis_boss = []
 tempo_ultimo_ataque_boss = 0
@@ -990,6 +1024,13 @@ def desenhar_barra_de_vida_petro(surface, vida_petro, pos_x, pos_y,vida_maxima_p
     
     # Desenhando a borda da barra de vida (preta)
     pygame.draw.rect(surface, (0, 0, 0), (pos_x, pos_y, largura_barra_petro, altura_barra_petro), 2)    
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 ###################################################  SONS UNIVERSAIS ################################################
 

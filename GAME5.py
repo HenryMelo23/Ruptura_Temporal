@@ -185,9 +185,9 @@ piscar_magia = False
 
 #INIMIGOS
 # Carregar a imagem do mapa
-mapa = pygame.image.load(mapa_path5).convert()
+mapa_atual_path = mapa_path5
+mapa = pygame.image.load(mapa_atual_path).convert()
 mapa = pygame.transform.scale(mapa, (largura_mapa, altura_mapa))
-# Carregar as sequências de imagens do personagem
 
 # Configurações do loop principal
 relogio = pygame.time.Clock()
@@ -664,16 +664,38 @@ while running:
 
 
     tela.fill((255, 255, 255))
-    tela.blit(mapa, (0, 0))
+    if em_transicao_mapa:
+        # 1. Desenha o mapa novo ao fundo (ele é o que será revelado)
+        tela.blit(mapa_novo, (0, 0))
+        
+        # 2. Criamos uma máscara de "furos" para este frame
+        mascara_furos = pygame.Surface((largura_mapa, altura_mapa), pygame.SRCALPHA)
+        
+        for p in particulas_pulso:
+            p['x'] += p['vx']
+            p['y'] += p['vy']
+            # Desenha furos na máscara (cor preta com alfa total para o SUB funcionar)
+            pygame.draw.circle(mascara_furos, (0, 0, 0, 255), (int(p['x']), int(p['y'])), int(p['tamanho']))
+            
+            # Opcional: poeira visual brilhante nas bordas
+            pygame.draw.circle(tela, (200, 230, 255, 150), (int(p['x']), int(p['y'])), 2)
+
+        # 3. Aplicamos os furos no mapa antigo (Erosão)
+        # Importante: blitamos a máscara no mapa antigo usando subtração de alfa
+        mapa_antigo.blit(mascara_furos, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+        
+        # 4. Desenha o mapa antigo (agora com buracos) por cima do novo
+        tela.blit(mapa_antigo, (0, 0))
+        
+        # 5. Finaliza quando o tempo passar ou partículas saírem da tela
+        if pygame.time.get_ticks() - inicio_transicao_mapa > 3500: # 3.5 segundos de pura estética
+            mapa = mapa_novo
+            em_transicao_mapa = False
+    else:
+        # Desenho normal
+        tela.blit(mapa, (0, 0))
 
     
-
-    
-    
-
-    
-
-
 
     novas_ondas = []
     for onda in ondas:
@@ -743,11 +765,19 @@ while running:
 
         
 
-
+    # 1. Atualizar o histórico do jogador (Mantenha os últimos 60 frames)
+    if 'historico_player' not in locals():
+        historico_player = []
+    historico_player.append((pos_x_personagem, pos_y_personagem))
+    if len(historico_player) > 60:
+        historico_player.pop(0)
     personagem_rect = pygame.Rect(pos_x_personagem, pos_y_personagem, largura_personagem, altura_personagem)
-        
+    
     ###############################################   DESENHA O PERSONAGEM NA TELA ################################
-    tela.blit(frames_animacao[direcao_atual][frame_atual], (pos_x_personagem, pos_y_personagem))
+    if estado_atual_ia.get('miasma_ativo'):
+        tela.blit(imagem_personagem_doente, (pos_x_personagem, pos_y_personagem))
+    else:
+        tela.blit(frames_animacao[direcao_atual][frame_atual], (pos_x_personagem, pos_y_personagem))
     ###############################################   DESENHA O BOSS NA TELA ################################
     if boss_final_ativo:
         agora = pygame.time.get_ticks()
@@ -769,7 +799,8 @@ while running:
         dados_p = {
             'vida_atual': vida_umbra,
             'vida_max': vida_maxima_umbra,
-            'erros': erros_player_contagem
+            'erros': erros_player_contagem,
+            'mapa_atual': mapa_atual_path
         }
         # No exato frame em que a luta começa, resetamos os timers para o 'agora' atual
         if luta_iniciada and not estado_atual_ia.get('timers_sincronizados'):
@@ -783,14 +814,16 @@ while running:
             if agora - estado_atual_ia.get('ultimo_reforço_positivo', 0) >= 1000:
                 memoria_umbra.treinar(0.1)
                 estado_atual_ia['ultimo_reforço_positivo'] = agora
+            
             # --- 2. CHAMADA DO CÉREBRO (O GRAFO) ---
             if ataque_liberado:
                 estado_atual_ia = hb.processar_ia_umbra(
                     agora, boss_pos_ia, player_pos_data, 
-                    [], disparos, estado_atual_ia, dados_p,memoria_umbra
+                    historico_player, 
+                    disparos, estado_atual_ia, dados_p, memoria_umbra
                 )
-
-            # --- 3. HIERARQUIA DE MOVIMENTAÇÃO (O IF CORRIGIDO) ---
+            
+            # --- 3. HIERARQUIA DE MOVIMENTAÇÃO ---
             if estado_atual_ia.get('parede_ativa'):
                 if agora - estado_atual_ia.get('ultimo_tick_cura', 0) >= 600:
                     # Reduzimos para 3% para permitir o counter-play tático
@@ -807,6 +840,113 @@ while running:
                         "cor": (0, 255, 150) # Esmeralda Visionário
                     })
                     estado_atual_ia['ultimo_tick_cura'] = agora
+            
+            # --- RENDERIZAÇÃO E FÍSICA DO VÓRTICE TEMPORAL (FASE 1) ---
+            vortice = estado_atual_ia.get('vortice_ativo')
+            if vortice:
+                tempo_vortice = agora - vortice['tempo_inicio']
+                if tempo_vortice < vortice['duracao']:
+                    # Cálculos de atração vetorial e punição física
+                    dx_v = vortice['x'] - pos_x_personagem
+                    dy_v = vortice['y'] - pos_y_personagem
+                    dist_v = math.hypot(dx_v, dy_v)
+                    
+                    if dist_v > 5:
+                        fator_succao = vortice['forca'] * (1 - min(1, dist_v / 900))
+                        pos_x_personagem += (dx_v / dist_v) * fator_succao
+                        pos_y_personagem += (dy_v / dist_v) * fator_succao
+                        
+                        # Trava de colisão com os limites do mapa
+                        pos_x_personagem = max(0, min(largura_mapa - largura_personagem, pos_x_personagem))
+                        pos_y_personagem = max(0, min(altura_mapa - altura_personagem, pos_y_personagem))
+                    
+                    # Renderização animada da Singularidade
+                    frame_v = frames_vortex[(agora // 150) % len(frames_vortex)]
+                    frame_v = pygame.transform.scale(frame_v, (160, 160))
+                    tela.blit(frame_v, (vortice['x'] - 80, vortice['y'] - 80))
+                else:
+                    estado_atual_ia['vortice_ativo'] = None
+
+            # --- RENDERIZAÇÃO E FÍSICA DA PRISÃO CRIOGÊNICA (FASE 2) ---
+            prisao = estado_atual_ia.get('prisao_ativa')
+            if prisao:
+                tempo_prisao = agora - prisao['tempo_inicio']
+                if tempo_prisao < prisao['duracao']:
+                    
+                    # 1. Dinâmica de Pulsação e Crescimento da Zona
+                    raio_hitbox_base = 45
+                    aumento_pulso = int(abs(math.sin(agora * 0.001)) * 180)
+                    raio_hitbox_atual = raio_hitbox_base + aumento_pulso
+                    
+                    tamanho_vortice = (raio_hitbox_atual * 2) + 40 
+                    superficie_vortice = pygame.Surface((tamanho_vortice, tamanho_vortice), pygame.SRCALPHA)
+                    centro_v_x, centro_v_y = tamanho_vortice // 2, tamanho_vortice // 2
+                    
+                    # 2. Núcleo Energético Pulsante Expandido
+                    raio_nucleo = (raio_hitbox_atual * 0.6) + int(math.sin(agora * 0.008) * 8)
+                    alfa_nucleo = 110 + int(math.sin(agora * 0.008) * 40)
+                    cores_nucleo = [
+                        ((0, 80, 255, alfa_nucleo), raio_nucleo),      
+                        ((0, 160, 255, alfa_nucleo + 20), raio_nucleo * 0.7), 
+                        ((150, 240, 255, alfa_nucleo + 40), raio_nucleo * 0.3) 
+                    ]
+                    for cor, raio in cores_nucleo:
+                        pygame.draw.circle(superficie_vortice, cor, (centro_v_x, centro_v_y), max(1, int(raio)))
+
+                    # 3. Anel Externo Congelante (Acompanha o Pulso)
+                    num_segmentos = 40
+                    angulo_base = (agora * 0.002) 
+                    for i in range(num_segmentos):
+                        ang = angulo_base + (i * (math.pi * 2 / num_segmentos))
+                        r_ext = raio_hitbox_atual + random.uniform(-4, 4) 
+                        px = centro_v_x + r_ext * math.cos(ang)
+                        py = centro_v_y + r_ext * math.sin(ang)
+                        pygame.draw.circle(superficie_vortice, (200, 250, 255, 180), (int(px), int(py)), random.choice([2, 3, 4]))
+
+                    # 4. Tempestade de Flocos e Cristais
+                    random.seed(prisao['tempo_inicio']) 
+                    num_particulas = 70
+                    velocidade_tempestade = -(agora * 0.005) 
+                    
+                    for i in range(num_particulas):
+                        raio_orbita = random.uniform(15, raio_hitbox_atual)
+                        angulo_offset = random.uniform(0, math.pi * 2)
+                        tipo = random.choice(['floco', 'cristal', 'cristal']) 
+                        
+                        ang_final = velocidade_tempestade + angulo_offset
+                        px = centro_v_x + raio_orbita * math.cos(ang_final)
+                        py = centro_v_y + raio_orbita * math.sin(ang_final)
+                        
+                        if tipo == 'floco':
+                            superficie_vortice.blit(floco_superficie, (int(px)-2, int(py)-2))
+                        else:
+                            superficie_vortice.blit(cristal_superficie, (int(px)-3, int(py)-3))
+                    
+                    random.seed()
+
+                    # 5. Aplicação Visceral no Ecrã
+                    tela.blit(superficie_vortice, (prisao['x'] - centro_v_x, prisao['y'] - centro_v_y))
+
+                    # 6. Detecção de Punição Física (Hitbox Dinâmica)
+                    dist_p = math.hypot(prisao['x'] - personagem_rect.centerx, prisao['y'] - personagem_rect.centery)
+                    if dist_p < raio_hitbox_atual: 
+                        velocidade_personagem = 0.3 
+                        
+                        if agora % 1000 < 50:
+                            efeitos_texto.append({
+                                "texto": "ZERO ABSOLUTO!",
+                                "x": pos_x_personagem,
+                                "y": pos_y_personagem - 30,
+                                "tempo_inicio": agora,
+                                "cor": (0, 255, 255)
+                            })
+                    else:
+                        velocidade_personagem = velocidade_personagem_base
+                else:
+                    estado_atual_ia['prisao_ativa'] = None
+                    velocidade_personagem = velocidade_personagem_base
+            else:
+                velocidade_personagem = velocidade_personagem_base
 
             if estado_atual_ia.get('fase_tele') == "projetil_viajando":
                 sinal = estado_atual_ia.get('proj_tele')
@@ -823,7 +963,6 @@ while running:
                     pygame.draw.circle(tela, (200, 230, 255), (int(sinal['x']), int(sinal['y'])), 8)
                     pygame.draw.circle(tela, (0, 150, 255), (int(sinal['x']), int(sinal['y'])), 15, 2)
 
-
                     # C. O SALTO REAL (Quando o projétil chega ao destino)
                     if sinal['dist_percorrida'] >= sinal['dist_total']:
                         pos_x_umbra = sinal['target_pos'][0]
@@ -836,7 +975,6 @@ while running:
 
             else:
                 # SÓ SE MOVE NORMALMENTE SE NÃO ESTIVER TELEPORTANDO
-                # Isso impede que o movimento normal 'puxe' a boss de volta durante o salto
                 nova_pos, estado_mental = hb.movimentacao_inteligente_umbra(
                     agora, 
                     (pos_x_umbra, pos_y_umbra),
@@ -844,7 +982,8 @@ while running:
                     disparos, 
                     estado_atual_ia, 
                     dados_p,
-                    memoria_umbra  # <--- O argumento de aprendizado que faltava
+                    memoria_umbra,
+                    historico_player
                 )
                 pos_x_umbra, pos_y_umbra = nova_pos[0], nova_pos[1]
 
@@ -869,13 +1008,13 @@ while running:
             hitbox_boss5 = pygame.Rect(hitbox_x, pos_y_umbra + offset_y_boss, largura_boss - 30, altura_boss)
             tela.blit(img_atual_boss, (pos_x_umbra, pos_y_umbra + offset_y_boss))
            
-
-            # --- 5. BARRA DE VIDA ---
+            # --- 5. BARRA DE VIDA E PROJÉTEIS ---
             largura_barra = largura_boss * 0.8
             barra_x = pos_x_umbra + (largura_boss - largura_barra) // 2
             barra_y = pos_y_umbra + offset_y_boss - 15
             vida_percent = max(0, vida_umbra) / vida_maxima_umbra
             projeteis_vivos = []
+            
             for p in estado_atual_ia.get('projeteis', []):
                 # Movimentação baseada no ângulo definido pela IA
                 p["rect"].x += p["velocidade"] * math.cos(p["angulo"])
@@ -886,7 +1025,6 @@ while running:
                     projeteis_vivos.append(p)
                     
                     # --- 2. RENDERIZAÇÃO DOS PROJÉTEIS ---
-                    # Definimos o visual com base no tipo (Comum ou Fúria)
                     if p.get("tipo") == "furia":
                         cor_tiro = (138, 43, 226) # Roxo Intenso
                         raio = 12
@@ -894,27 +1032,46 @@ while running:
                         cor_tiro = (255, 50, 50)  # Vermelho Alerta
                         raio = 6
 
-                    # Desenho do núcleo e brilho externo
                     pygame.draw.circle(tela, cor_tiro, p["rect"].center, raio)
                     pygame.draw.circle(tela, (255, 255, 255), p["rect"].center, raio // 2)
                 else:
                     memoria_umbra.treinar(-0.5)
 
-            # Atualiza a lista oficial na memória da IA
             estado_atual_ia['projeteis'] = projeteis_vivos
 
             # --- 3. DETECÇÃO DE DANO NO JOGADOR ---
             hitbox_player = pygame.Rect(pos_x_personagem, pos_y_personagem, largura_personagem, altura_personagem)
             for p in estado_atual_ia['projeteis']:
                 if p["rect"].colliderect(hitbox_player):
-
                     vida -= 25
                     memoria_umbra.treinar(1.5) # Recompensa alta por acerto tático
                     estado_atual_ia['projeteis'].remove(p)
-         # Renderização Final da Boss
-            pygame.draw.rect(tela, (40, 40, 40), (barra_x, barra_y, largura_barra, 7))
-            pygame.draw.rect(tela, (138, 43, 226), (barra_x, barra_y, largura_barra * vida_percent, 7))
-            pygame.draw.rect(tela, (0, 255, 0), (barra_x, barra_y, largura_barra, 7), 1)
+
+            miasma = estado_atual_ia.get('miasma_ativo')
+            if miasma:
+                tempo_miasma = agora - miasma['tempo_inicio']
+                if tempo_miasma < miasma['duracao']:
+                    
+                    if agora % 1000 < 50: 
+                        vida -= vida_maxima*0.001
+                    
+                    centro_ceg_x = pos_x_personagem + (largura_personagem // 2)
+                    centro_ceg_y = pos_y_personagem + (altura_personagem // 2)
+                    
+                    tela.blit(img_cegueira, (centro_ceg_x - (largura_mascara // 2), centro_ceg_y - (altura_mascara // 2)))
+                else:
+                    estado_atual_ia['miasma_ativo'] = None
+            
+            # Renderização Final da Barra de Vida da Boss
+            mostrar_vida_boss = True
+            if estado_atual_ia.get('miasma_ativo'):
+                if agora % 3000 < 2000:
+                    mostrar_vida_boss = False
+                    
+            if mostrar_vida_boss:
+                pygame.draw.rect(tela, (40, 40, 40), (barra_x, barra_y, largura_barra, 7))
+                pygame.draw.rect(tela, (138, 43, 226), (barra_x, barra_y, largura_barra * vida_percent, 7))
+                pygame.draw.rect(tela, (0, 255, 0), (barra_x, barra_y, largura_barra, 7), 1)
         else:
             img_atual_boss = frames_geo_umbra_paths[direcao_boss][frame_boss]
             offset_y_boss = math.sin(agora * 0.005) * 7
@@ -954,9 +1111,57 @@ while running:
                 # Aplicação de Dano e Treino
                 if vida_umbra > 0:
                     vida_umbra -= dano_final
-                    memoria_umbra.treinar(-1.0)
+                    punicao = -1.5 # Punição base aumentada
+    
+                    if random.random() <= chance_critico:
+                        punicao -= 2.0  # Punição extra por dano crítico (falha tática grave)
                     
-                    # Ativação de Veneno Preditivo (Igual ao Boss 1)
+                    if estado_atual_ia.get('parede_ativa'):
+                        punicao -= 1.0  # Punição extra por ser atingido com escudo ativo (quebra de defesa)
+                    if inicio_transicao_mapa == 0 or (agora - inicio_transicao_mapa) >= 35000:
+                        trauma_umbra_acumulado += dano_final
+                        
+                        if trauma_umbra_acumulado >= (vida_maxima_umbra * 0.25):
+                            trauma_umbra_acumulado -= (vida_maxima_umbra * 0.25) 
+                            
+                            # Preparamos o cenário
+                            mapa_antigo = mapa.copy().convert_alpha() 
+                            
+                            novo_path = random.choice(mapas_disponiveis)
+                            mapa_atual_path = novo_path
+                            # --- A PEÇA QUE FALTAVA ---
+                            # Atualizamos o dicionário que a IA consulta (dados_boss no seu GAME5.py)
+                            dados_p['mapa_atual'] = novo_path 
+                            # --------------------------
+
+                            mapa_novo = pygame.transform.scale(pygame.image.load(novo_path).convert(), (largura_mapa, altura_mapa))
+                            
+                            # Resets de estado da IA
+                            estado_atual_ia['ultimo_vortice'] = agora
+                            estado_atual_ia['ultimo_prisao'] = agora
+                            estado_atual_ia['ultimo_sifon_fim'] = agora
+                            estado_atual_ia['ultimo_ataque'] = agora
+                            estado_atual_ia['ultimo_miasma'] = agora
+                            estado_atual_ia['entrada_de_fase'] = True
+                            
+                            # Lógica de partículas (borrachas)
+                            particulas_pulso = []
+                            for i in range(400): 
+                                ang = random.uniform(0, math.pi * 2)
+                                vel = random.uniform(3, 8)
+                                particulas_pulso.append({
+                                    'x': largura_mapa // 2,
+                                    'y': altura_mapa // 2,
+                                    'vx': math.cos(ang) * vel,
+                                    'vy': math.sin(ang) * vel,
+                                    'tamanho': random.randint(10, 25)
+                                })
+                            
+                            em_transicao_mapa = True
+                            inicio_transicao_mapa = pygame.time.get_ticks()
+
+                    memoria_umbra.treinar(punicao, prioridade=True)
+                    
                     if not boss_envenenado and Poison_Active:
                         boss_envenenado = True
                         dano_por_tick_veneno_boss = vida_maxima_umbra * (Dano_Veneno_Acumulado / 100)

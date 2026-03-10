@@ -34,20 +34,74 @@ class MemoriaEvolutivaUmbra:
     def decidir(self, estado, acoes):
         if estado not in self.q_table:
             self.q_table[estado] = {a: 0.0 for a in acoes}
-        
         if random.random() < self.exploracao:
             self.ultima_acao = random.choice(acoes)
         else:
             self.ultima_acao = max(self.q_table[estado], key=self.q_table[estado].get)
-        
         self.ultimo_estado = estado
         return self.ultima_acao
 
     def treinar(self, recompensa):
         if self.ultimo_estado and self.ultima_acao:
             v_antigo = self.q_table[self.ultimo_estado][self.ultima_acao]
-            # Algoritmo de Bellman: $Q(s,a) = Q(s,a) + \alpha \cdot (r - Q(s,a))$
             self.q_table[self.ultimo_estado][self.ultima_acao] = v_antigo + self.aprendizado * (recompensa - v_antigo)
+
+    # --- PROTOCOLO BAYESIANO: REGISTRO DE PADRÕES ---
+    def registrar_esquiva_player(self, vx, vy):
+        if "tendencias" not in self.q_table:
+            self.q_table["tendencias"] = {"ESQUERDA": 0, "DIREITA": 0, "CIMA": 0, "BAIXO": 0, "TOTAL": 0}
+        
+        t = self.q_table["tendencias"]
+        # Só registra se houver movimento real (evita poluir a média parado)
+        if abs(vx) > 0.5 or abs(vy) > 0.5:
+            if vx > 1: t["DIREITA"] += 1
+            elif vx < -1: t["ESQUERDA"] += 1
+            if vy > 1: t["BAIXO"] += 1
+            elif vy < -1: t["CIMA"] += 1
+            t["TOTAL"] += 1
+
+    def calcular_bias_bayesiano(self):
+        t = self.q_table.get("tendencias", {"TOTAL": 0})
+        total = max(1, t["TOTAL"])
+        bias_x = (t.get("DIREITA", 0) - t.get("ESQUERDA", 0)) / total
+        bias_y = (t.get("BAIXO", 0) - t.get("CIMA", 0)) / total
+        return bias_x, bias_y
+
+    def discretizar_estado(self, vida_perc, dist_player, sob_fogo, historico_player):
+        v = "crit" if vida_perc < 0.35 else "estavel"
+        d = "perto" if dist_player < 350 else "longe"
+        f = "perigo" if sob_fogo else "calmo"
+        
+        # NOVO: Detecta se o player mudou de direção bruscamente (o "passo atrás")
+        m = "linear"
+        if len(historico_player) >= 10:
+            # Compara o vetor antigo com o atual
+            p1, p2, p3 = historico_player[-10], historico_player[-5], historico_player[-1]
+            v1 = (p2[0]-p1[0], p2[1]-p1[1])
+            v2 = (p3[0]-p2[0], p3[1]-p2[1])
+            # Se o produto escalar for baixo ou negativo, o movimento é errático
+            if (v1[0]*v2[0] + v1[1]*v2[1]) < 0:
+                m = "erratico"
+                
+        return f"{v}_{d}_{f}_{m}"
+    def treinar(self, recompensa, prioridade=False): # <--- ADICIONE 'prioridade=False' AQUI
+        if self.ultimo_estado and self.ultima_acao:
+            # Se for prioridade, dobramos a taxa de aprendizado para esse evento específico
+            taxa = self.aprendizado * 2 if prioridade else self.aprendizado
+            
+            v_antigo = self.q_table[self.ultimo_estado][self.ultima_acao]
+            # Atualização da Q-Table
+            self.q_table[self.ultimo_estado][self.ultima_acao] = v_antigo + taxa * (recompensa - v_antigo)
+
+def calcular_bias_bayesiano(self):
+    t = self.q_table.get("tendencias", {"TOTAL": 0})
+    total = max(1, t["TOTAL"])
+    
+    # Retornamos o bias (desvio) estatístico
+    bias_x = (t.get("DIREITA", 0) - t.get("ESQUERDA", 0)) / total
+    bias_y = (t.get("BAIXO", 0) - t.get("CIMA", 0)) / total
+    return bias_x, bias_y
+
 
 def calcular_distancia(p1, p2):
     r"""
@@ -68,49 +122,37 @@ def calcular_poh(player_pos, boss_pos, historico_player, confianca_ia):
     return confianca_ia * estabilidade * fator_dist
 
 def node_ataque_direcionado(agora, estado_ia, bx, by, px, py, historico_player, memoria):
-    """
-    Nódulo de Ofensiva Visionária: Integra predição física com aprendizado generativo.
-    """
-    # 1. VALIDAÇÃO DE CADÊNCIA (COOLDOWN)
     if agora - estado_ia.get('ultimo_attack', 0) >= estado_ia.get('intervalo', 1900):
-        
-        # 2. CÁLCULO FÍSICO DO TEMPO DE VOO
         distancia = math.hypot(px - bx, py - by)
-        vel_projetil = 7  # Mantendo sua variável de contexto
-        
-        # Tempo (em frames) que o tiro levará para chegar: $t = d / v$
+        vel_projetil = 7 
         tempo_voo = distancia / vel_projetil
         
-        # 3. CONSULTA À MEMÓRIA GENERATIVA (O PESO DA EXPERIÊNCIA)
-        # A IA discretiza a situação para decidir o quão agressiva será a mira
-        vida_perc = estado_ia.get('vida_atual', 1) / estado_ia.get('vida_max', 1)
-        estado_disc = memoria.discretizar_estado(vida_perc, distancia, True)
+        # O SEGREDO: A Umbra decide se vai tentar prever ou atirar no corpo
+        # Se o player é "errático", ela tem 50% de chance de atirar onde você ESTÁ
+        # para te pegar justamente no seu "passo atrás".
+        modo_predict = random.random() > 0.4 # 60% Predict, 40% Direto
         
-        # O 'fator_lead' deixa de ser fixo (0.8) e passa a ser influenciado pela Q-Table
-        # Se a IA errou muito recentemente, ela aprenderá a reduzir ou aumentar este peso
-        fator_aprendido = estado_ia.get('lead', 0.8)
-        
-        # 4. EXTRAPOLAÇÃO DINÂMICA
-        if len(historico_player) >= 2:
+        if len(historico_player) >= 2 and modo_predict:
             v_px = px - historico_player[-2][0]
             v_py = py - historico_player[-2][1]
             
-            # O alvo agora é projetado exatamente para onde o player estará no momento do impacto
-            alvo_x = px + (v_px * tempo_voo * fator_aprendido)
-            alvo_y = py + (v_py * tempo_voo * fator_aprendido)
+            bias_x, bias_y = memoria.calcular_bias_bayesiano()
+            # Fator de lead (ajustado pela confiança da IA)
+            fator_lead = estado_ia.get('lead', 0.8)
+            
+            alvo_x = px + (v_px * tempo_voo * fator_lead) + (bias_x * 120)
+            alvo_y = py + (v_py * tempo_voo * fator_lead) + (bias_y * 120)
         else:
+            # Atira direto no Senhor (punindo o "passo atrás" excessivo)
             alvo_x, alvo_y = px, py
 
-        # 5. EXECUÇÃO DO DISPARO
         angulo = math.atan2(alvo_y - by, alvo_x - bx)
         estado_ia['projeteis'].append({
             "rect": pygame.Rect(bx + 20, by + 20, 12, 12),
             "angulo": angulo,
             "velocidade": vel_projetil,
-            "tipo": "comum",
-            "cor": (255, 50, 50)
+            "tipo": "comum"
         })
-
         estado_ia['ultimo_attack'] = agora
 
 # --- NÓDULOS DE PENSAMENTO (AÇÕES DO GRAFO) ---
@@ -155,7 +197,7 @@ def node_sifon(agora, estado_ia, boss_pos, centro_mapa):
         
     # 2. GESTÃO DO TEMPO DE ATIVAÇÃO (4 SEGUNDOS)
     # Verificamos se o tempo de duração expirou
-    if agora - estado_ia.get('ultimo_parede', 0) > 4000:
+    if agora - estado_ia.get('ultimo_parede', 0) > 6000:
         estado_ia['parede_ativa'] = False
         # O SEGREDO: O cooldown começa a contar AGORA
         estado_ia['ultimo_sifon_fim'] = agora
@@ -250,9 +292,10 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
     pesos = { 
         "TELEPORTE": 0.0, 
         "SIFON": 0.0,
+        "TRANSMUTAR": 0.0,
+        "VORTICE": 0.0,
         "ATAQUE": 1.0 
     }
-
     # Lógica de Teleporte: Apenas define o peso estratégico
     if agora - estado_ia.get('ultimo_teleporte', 0) >= 10000:
         pesos["TELEPORTE"] = 1.8
@@ -260,9 +303,8 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
             pesos["TELEPORTE"] = 4.0
 
     # Lógica de Sifon (Gatilhos de Saúde e Dano)
-    # Garante que o cooldown de 20s seja respeitado após o FIM da última ativação
     tempo_pos_sifon = agora - estado_ia.get('ultimo_sifon_fim', 0)
-    if tempo_pos_sifon >= 25000 or estado_ia.get('ultimo_sifon_fim') == 0:
+    if tempo_pos_sifon >= 15000 or estado_ia.get('ultimo_sifon_fim') == 0:
         vida_perc = config_boss.get('vida_atual', 1600) / config_boss.get('vida_max', 1600)
         dano_acumulado = estado_ia.get('dano_recente', 0)
 
@@ -270,9 +312,37 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
         if vida_perc < 0.15:
             pesos["SIFON"] = 20.0
         elif dano_acumulado >= 400:
-            pesos["SIFON"] = 999.0 # Prioridade absoluta para teste e sobrevivência
+            pesos["SIFON"] = 9.0 # Prioridade absoluta para teste e sobrevivência
         elif vida_perc < 0.50:
             pesos["SIFON"] = 1.5
+        
+    print(config_boss.get('mapa_atual') )
+    # Lógica Exclusiva da Fase 1 (Poeira Cósmica)
+    if config_boss.get('mapa_atual') == "Sprites/Fase1.png":
+        if agora - estado_ia.get('ultimo_vortice', 0) >= 18000: # Cooldown de 18s
+            dist_player = math.hypot(px - bx, py - by)
+            if dist_player > 350:
+                pesos["VORTICE"] = 6.0 # Punição severa se o jogador se afastar muito
+            else:
+                pesos["VORTICE"] = 2.0
+ 
+    # Lógica Exclusiva da Fase 2 (Prisão Criogênica)
+    if config_boss.get('mapa_atual') == "Sprites/Fase2.png":
+        if agora - estado_ia.get('ultimo_prisao', 0) >= 14000: # Cooldown de 14s
+            # Aumenta a chance se o jogador estiver se movendo muito (tentando esquivar)
+            if len(historico_player) >= 2 and math.hypot(px - historico_player[-2][0], py - historico_player[-2][1]) > 1.0:
+                pesos["PRISAO"] = 5.0
+            else:
+                pesos["PRISAO"] = 2.5
+      
+    # Lógica Exclusiva da Fase 3 (Miasma da Podridão)
+    if config_boss.get('mapa_atual') == "Sprites/Fase3.png":
+        if agora - estado_ia.get('ultimo_miasma', 0) >= 20000:
+            if estado_ia.get('dano_recente', 0) > 200:
+                pesos["MIASMA"] = 10.0
+            else:
+                pesos["MIASMA"] = 2.5
+        
 
     # --- 3. RESOLUÇÃO E EXECUÇÃO ---
     decisao = max(pesos, key=pesos.get)
@@ -283,6 +353,31 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
         estado_ia['ultimo_parede'] = agora
         estado_ia['dano_recente'] = 0 
         node_sifon(agora, estado_ia, boss_pos, centro_mapa)
+
+
+    elif decisao == "TRANSMUTAR":
+        estado_ia['iniciar_transicao_mapa'] = True
+        estado_ia['ultimo_transmutar'] = agora
+        estado_ia['dano_recente'] = 0 
+        
+        vec_x, vec_y = bx - px, by - py
+        mag = math.hypot(vec_x, vec_y)
+        alvo_x, alvo_y = (bx + (vec_x/mag)*600, by + (vec_y/mag)*600) if mag > 0 else (bx+400, by+400)
+        alvo_x_f = max(espacamento, min(largura_mapa - 100, alvo_x))
+        alvo_y_f = max(espacamento, min(altura_mapa - 150, alvo_y))
+        node_teleporte_sinalizador(agora, estado_ia, boss_pos, (alvo_x_f, alvo_y_f))
+    
+    elif decisao == "VORTICE":
+        node_vortice_temporal(agora, estado_ia, px, py, memoria)
+        estado_ia['dano_recente'] = 0
+    
+    elif decisao == "MIASMA":
+        node_miasma_toxico(agora, estado_ia)
+        estado_ia['dano_recente'] = 0
+
+    elif decisao == "PRISAO":
+        node_prisao_criogenica(agora, estado_ia, px, py, historico_player)
+        estado_ia['dano_recente'] = 0
 
     elif decisao == "TELEPORTE":
         # Execução do Teleporte apenas se vencer os outros pesos
@@ -306,7 +401,55 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
         node_ataque_direcionado(agora, estado_ia, bx, by, px, py, historico_player, memoria)
     return estado_ia
 
-def movimentacao_inteligente_umbra(agora, boss_pos, player_pos, disparos, estado_mov, dados_player, memoria):
+def node_miasma_toxico(agora, estado_ia):
+    estado_ia['miasma_ativo'] = {
+        'tempo_inicio': agora,
+        'duracao': 4500 
+    }
+    estado_ia['ultimo_miasma'] = agora
+
+def node_vortice_temporal(agora, estado_ia, px, py, memoria):
+    """Nódulo de Singularidade: Ancorado no centro do tecido dimensional."""
+    alvo_x = largura_mapa // 2
+    alvo_y = altura_mapa // 2
+    
+    estado_ia['vortice_ativo'] = {
+        'x': alvo_x, 
+        'y': alvo_y,
+        'tempo_inicio': agora, 
+        'duracao': 8000, 
+        'forca': 2.8
+    }
+    estado_ia['ultimo_vortice'] = agora
+
+def node_prisao_criogenica(agora, estado_ia, px, py, historico_player):
+    """Nódulo de Congelamento: Intercepta a rota de fuga com Zero Absoluto."""
+    if len(historico_player) >= 5:
+        # Calcula o vetor de movimento dos últimos frames
+        vx = px - historico_player[-5][0]
+        vy = py - historico_player[-5][1]
+        
+        # Projeta a armadilha à frente do jogador
+        alvo_x = px + (vx * 6)
+        alvo_y = py + (vy * 6)
+    else:
+        alvo_x, alvo_y = px, py
+
+    # Contenção nos limites do mapa
+    alvo_x = max(80, min(1280, alvo_x))
+    alvo_y = max(80, min(680, alvo_y))
+    
+    estado_ia['prisao_ativa'] = {
+        'rect': pygame.Rect(alvo_x - 60, alvo_y - 60, 120, 120),
+        'tempo_inicio': agora,
+        'duracao': 3500, # 3.5 segundos de armadilha no chão
+        'x': alvo_x,
+        'y': alvo_y
+    }
+    estado_ia['ultimo_prisao'] = agora
+
+
+def movimentacao_inteligente_umbra(agora, boss_pos, player_pos, disparos, estado_mov, dados_player, memoria,historico_player):
     r"""
     Navegação de Fluxo Visionária Generativa.
     """
@@ -327,7 +470,7 @@ def movimentacao_inteligente_umbra(agora, boss_pos, player_pos, disparos, estado
         vida_perc = dados_player['vida_atual'] / dados_player['vida_max']
         sob_fogo = len(disparos) > 0
         
-        estado_atual = memoria.discretizar_estado(vida_perc, dist_p, sob_fogo)
+        estado_atual = memoria.discretizar_estado(vida_perc, dist_p, sob_fogo, historico_player)
         estrategias = ["FUGIR", "INTERCEPTAR", "ORBITAR", "CERCAR"]
         decisao = memoria.decidir(estado_atual, estrategias)
         

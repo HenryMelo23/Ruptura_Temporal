@@ -1,7 +1,7 @@
 import pygame
 import time
 import random  
-
+from Variaveis import *
 # Inicializar Pygame
 pygame.init()
 
@@ -38,9 +38,9 @@ som_game.play()
 window = pygame.display.set_mode((1360 * 0.8, 768 * 1))
 
 # Escolher e exibir a imagem de fundo
-background_image = pygame.image.load(
+background_image = pygame.image.load(resource_path(
     'Sprites/Game_over2.png' if random.randint(1, 100) <= 2 else 'Sprites/Game_over1.png'
-)
+))
 background_image = pygame.transform.scale(background_image, window.get_size())
 window.blit(background_image, (0, 0))
 

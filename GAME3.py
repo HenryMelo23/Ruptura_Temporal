@@ -858,7 +858,7 @@ while running:
                     else:
                         pontuacao_exib += ganho
 
-                    if not boss_vivo3:
+                    if not Boss_vivo3:
                         vida_boss3 += 25 + nivel_ameaca * 10
                         vida_maxima_boss3 = vida_boss3
                         vida_boss4 += 30 + nivel_ameaca * 12
@@ -889,7 +889,7 @@ while running:
                     else:
                         pontuacao_exib += ganho
 
-                    if not boss_vivo3:
+                    if not Boss_vivo3:
                         vida_boss3 += 25 + nivel_ameaca * 10
                         vida_maxima_boss3 = vida_boss3
                         vida_boss4 += 30 + nivel_ameaca * 12
@@ -1245,7 +1245,7 @@ while running:
                     pontuacao += ganho
                     pontuacao_exib += ganho
 
-                    if not boss_vivo3:
+                    if not Boss_vivo3:
                         vida_boss3 += 25 + nivel_ameaca * 10
                         vida_maxima_boss3 = vida_boss3
                         vida_boss4 += 30 + nivel_ameaca * 12
@@ -1437,7 +1437,7 @@ while running:
 
     tempo_atual = pygame.time.get_ticks()
     if Ultimo_Estalo and vida_boss3 <= Executa_inimigo * vida_maxima_boss3:
-        boss_vivo3=False
+        Boss_vivo3=False
     elif vida_boss3 <=0:
         Boss_vivo3=False
 

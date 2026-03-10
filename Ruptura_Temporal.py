@@ -3,6 +3,7 @@
 #Uso comercial é estritamente proibido. Modificações e redistribuições são permitidas sob as mesmas condições.
 
 
+
 import pygame
 import sys
 import importlib
@@ -98,6 +99,7 @@ else:
 
 # Variável para controlar movimento do analógico
 analogo_movido = False
+
 
 
 def tela_escolha_modo():
