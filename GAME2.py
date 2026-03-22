@@ -1197,7 +1197,7 @@ while running:
                             import GAME3
                             
                             toque+=1
-                    # Aplique os efeitos ou recompensas ao derrotar o boss aqui
+                    
     #MODIFICA O TEMPO QUE OS INIMIGOS DISPARAM REFERENTE O BOSS ESTÁ VIVO OU NÃO                
     if not boss_vivo2:
         intervalo_disparo_inimigo = 3500

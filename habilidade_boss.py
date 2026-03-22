@@ -12,6 +12,10 @@ class MemoriaEvolutivaUmbra:
         self.desconto = 0.9
         self.exploracao = 0.2
         self.q_table = self._carregar()
+        
+        if "neurogenese" not in self.q_table:
+            self.q_table["neurogenese"] = {} 
+            
         self.ultimo_estado = None
         self.ultima_acao = None
 
@@ -25,11 +29,27 @@ class MemoriaEvolutivaUmbra:
         with open(self.arquivo, 'w') as f:
             json.dump(self.q_table, f)
 
-    def discretizar_estado(self, vida_perc, dist_player, sob_fogo):
+    def discretizar_estado(self, vida_perc, dist_player, sob_fogo, historico_player):
         v = "crit" if vida_perc < 0.35 else "estavel"
         d = "perto" if dist_player < 350 else "longe"
         f = "perigo" if sob_fogo else "calmo"
-        return f"{v}_{d}_{f}"
+        
+        m = "linear"
+        if len(historico_player) >= 10:
+            p1, p2, p3 = historico_player[-10], historico_player[-5], historico_player[-1]
+            v1 = (p2[0]-p1[0], p2[1]-p1[1])
+            v2 = (p3[0]-p2[0], p3[1]-p2[1])
+            if (v1[0]*v2[0] + v1[1]*v2[1]) < 0:
+                m = "erratico"
+        
+        estado_base = f"{v}_{d}_{f}_{m}"
+
+        # A Umbra cria uma "assinatura" da situação exata
+        sig_vida = round(vida_perc, 1) # Agrupa de 10% em 10%
+        sig_dist = round(dist_player / 100) # Agrupa a cada 100 pixels
+        assinatura = f"SIG_{sig_vida}_{sig_dist}_{f}_{m}"
+
+        return f"{estado_base}|{assinatura}"
 
     def decidir(self, estado, acoes):
         if estado not in self.q_table:
@@ -93,6 +113,19 @@ class MemoriaEvolutivaUmbra:
             # Atualização da Q-Table
             self.q_table[self.ultimo_estado][self.ultima_acao] = v_antigo + taxa * (recompensa - v_antigo)
 
+def aplicar_inteligencia_q_ao_grafo(pesos, estado_ia, memoria, vida_perc, dist_p, sob_fogo, historico):
+
+    estado_composto = memoria.discretizar_estado(vida_perc, dist_p, sob_fogo, historico)
+    
+    if estado_composto in memoria.q_table:
+        conhecimento = memoria.q_table[estado_composto]
+        for acao, valor in conhecimento.items():
+            if acao in pesos:
+                pesos[acao] += valor * 2.0 
+    
+    return pesos
+
+
 def calcular_bias_bayesiano(self):
     t = self.q_table.get("tendencias", {"TOTAL": 0})
     total = max(1, t["TOTAL"])
@@ -143,7 +176,6 @@ def node_ataque_direcionado(agora, estado_ia, bx, by, px, py, historico_player, 
             alvo_x = px + (v_px * tempo_voo * fator_lead) + (bias_x * 120)
             alvo_y = py + (v_py * tempo_voo * fator_lead) + (bias_y * 120)
         else:
-            # Atira direto no Senhor (punindo o "passo atrás" excessivo)
             alvo_x, alvo_y = px, py
 
         angulo = math.atan2(alvo_y - by, alvo_x - bx)
@@ -211,7 +243,6 @@ def node_teleporte(agora, estado_ia, boss_pos, player_pos, historico_player, tip
     
     if tipo == "fuga":
         # ESTRATÉGIA DE MAXIMIZAÇÃO DE DISTÂNCIA
-        # Identifica os cantos da arena e seleciona o que está mais longe do Senhor
         cantos = [(150, 150), (1150, 150), (150, 620), (1150, 620)]
         alvo_x, alvo_y = max(cantos, key=lambda c: math.hypot(c[0] - px, c[1] - py))
     else:
@@ -227,7 +258,6 @@ def node_teleporte(agora, estado_ia, boss_pos, player_pos, historico_player, tip
             alvo_x = px + (350 if bx < px else -350)
             alvo_y = py
 
-    # CONTENÇÃO FÍSICA (Limites fornecidos pelo Senhor)
     alvo_x = max(150, min(1150, alvo_x))
     alvo_y = max(150, min(620, alvo_y))
     
@@ -296,6 +326,11 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
         "VORTICE": 0.0,
         "ATAQUE": 1.0 
     }
+    vida_p = config_boss.get('vida_atual', 1600) / config_boss.get('vida_max', 1600)
+    dist_p = math.hypot(px - bx, py - by)
+    sob_fogo = len(disparos_player) > 0
+    
+    pesos = aplicar_inteligencia_q_ao_grafo(pesos, estado_ia, memoria, vida_p, dist_p, sob_fogo, historico_player)
     # Lógica de Teleporte: Apenas define o peso estratégico
     if agora - estado_ia.get('ultimo_teleporte', 0) >= 10000:
         pesos["TELEPORTE"] = 1.8
@@ -316,7 +351,7 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
         elif vida_perc < 0.50:
             pesos["SIFON"] = 1.5
         
-    print(config_boss.get('mapa_atual') )
+
     # Lógica Exclusiva da Fase 1 (Poeira Cósmica)
     if config_boss.get('mapa_atual') == "Sprites/Fase1.png":
         if agora - estado_ia.get('ultimo_vortice', 0) >= 18000: # Cooldown de 18s
@@ -346,6 +381,21 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
 
     # --- 3. RESOLUÇÃO E EXECUÇÃO ---
     decisao = max(pesos, key=pesos.get)
+
+    # Identifica o processamento paralelo (Múltiplas camadas de ação)
+    acoes_simultaneas = []
+    if estado_ia.get('parede_ativa'): acoes_simultaneas.append("SIFON")
+    if estado_ia.get('vortice_ativo'): acoes_simultaneas.append("VORTICE")
+    if estado_ia.get('miasma_ativo'): acoes_simultaneas.append("MIASMA")
+    if estado_ia.get('prisao_ativa'): acoes_simultaneas.append("PRISAO")
+    if estado_ia.get('fase_tele', 'espera') != 'espera': acoes_simultaneas.append("TELEPORTE")
+    
+    # Adiciona a decisão instantânea atual
+    if decisao not in acoes_simultaneas:
+        acoes_simultaneas.append(decisao)
+
+    estado_ia['decisoes_ativas'] = acoes_simultaneas
+    estado_ia['ultimos_pesos_calculados'] = pesos
 
     if decisao == "SIFON":
         # Ativação do Sifão e Reset de Telemetria de Dano

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SISTEMA DE COGNIÇÃO UMBRA v5.0 - GRAFO REAL</title>
+    <style>
+        body { background: #000205; color: #00ffcc; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; }
+        #canvas { display: block; }
+        
+        .hud { position: absolute; top: 20px; left: 20px; z-index: 10; padding: 15px; background: rgba(0, 10, 20, 0.85); border: 1px solid #0055ff; border-radius: 4px; box-shadow: 0 0 15px rgba(0, 85, 255, 0.3); max-width: 320px; }
+        .label { font-size: 11px; color: #0055ff; letter-spacing: 1.5px; margin-bottom: 2px; text-transform: uppercase; }
+        .value { font-size: 16px; color: #00ffcc; text-shadow: 0 0 8px #00ffcc; margin-bottom: 10px; font-weight: bold; word-wrap: break-word;}
+        .value.active { color: #ffffff; text-shadow: 0 0 12px #ffffff; }
+        
+        .main-title { position: absolute; top: 20px; width: 100%; text-align: center; font-size: 28px; font-weight: bold; color: #00ffcc; text-shadow: 0 0 15px #00ffcc, 0 0 5px #ffffff; letter-spacing: 3px; z-index: 5; }
+    </style>
+</head>
+<body>
+    <div class="main-title">GRAFO DE DECISÃO UMBRA v5.0</div>
+    <div class="hud" id="hud">
+        <div class="label">Q-STATE CRISTALIZADO</div>
+        <div id="state-val" class="value">Sincronizando...</div>
+        <div class="label">VETOR DE EXECUÇÃO</div>
+        <div id="choice-val" class="value active">---</div>
+        <div class="label">BIAS ESTATÍSTICO (X,Y)</div>
+        <div id="bias-val" class="value">0.00, 0.00</div>
+        <div class="label">INTEGRIDADE VITAL</div>
+        <div id="life-val" class="value">---</div>
+    </div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const C_CYAN = "#00ffcc";
+        const C_BLUE = "#0055ff";
+        const C_RED = "#ff3232";
+        const C_WHITE = "#ffffff";
+        const C_PURPLE = "#8a2be2";
+
+        let neuralData = {
+            "estado_atual": "aguardando_dados",
+            "decisao_ativa": [],
+            "bias_bayesiano": [0.0, 0.0],
+            "rede_completa": {},
+            "estatisticas": { "vida_atual": 0, "vida_max": 1600 }
+        };
+
+        const acoesUniversais = ["ATAQUE", "TELEPORTE", "SIFON", "TRANSMUTAR", "VORTICE", "MIASMA", "PRISAO"];
+
+        async function pullData() {
+            try {
+                const r = await fetch('http://localhost:5000/dados');
+                const d = await r.json();
+                if (d && d.estado_atual) {
+                    neuralData = d;
+                }
+                updateHUD();
+            } catch(e) {}
+        }
+        setInterval(pullData, 40); 
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.onresize = resize;
+        resize();
+
+        function updateHUD() {
+            document.getElementById('state-val').innerText = neuralData.estado_atual;
+            let decisoesAtivas = Array.isArray(neuralData.decisao_ativa) ? neuralData.decisao_ativa : [neuralData.decisao_ativa];
+            document.getElementById('choice-val').innerText = decisoesAtivas.join(" | ") || "---";
+            
+            if (neuralData.bias_bayesiano && neuralData.bias_bayesiano.length === 2) {
+                document.getElementById('bias-val').innerText = `${neuralData.bias_bayesiano[0].toFixed(2)}, ${neuralData.bias_bayesiano[1].toFixed(2)}`;
+            }
+            if (neuralData.estatisticas && neuralData.estatisticas.vida_atual !== undefined) {
+                document.getElementById('life-val').innerText = neuralData.estatisticas.vida_atual.toFixed(2);
+            }
+        }
+
+        function drawGlowCircle(x, y, radius, color, blur = 15) {
+            ctx.shadowBlur = blur;
+            ctx.shadowColor = color;
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0; 
+        }
+
+        function drawEnergyPulse(startX, startY, endX, endY, progress, color, width = 2, isMain = false) {
+            const currentX = startX + (endX - startX) * progress;
+            const currentY = startY + (endY - startY) * progress;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.beginPath(); 
+            ctx.moveTo(startX, startY); 
+            ctx.lineTo(currentX, currentY); 
+            ctx.stroke();
+
+            drawGlowCircle(currentX, currentY, isMain ? width * 2.5 : width * 1.5, C_WHITE, isMain ? 20 : 10);
+            
+            if (isMain && progress > 0.90) {
+                for(let k=0; k<3; k++) {
+                    const px = endX + (Math.random() - 0.5) * 40;
+                    const py = endY + (Math.random() - 0.5) * 40;
+                    drawGlowCircle(px, py, Math.random() * 4, C_WHITE, 8);
+                }
+            }
+        }
+
+        function drawNeuralNetwork() {
+            ctx.fillStyle = "rgba(0, 2, 5, 0.4)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const time = Date.now() / 1000;
+            const msTime = Date.now();
+
+            const inputX = canvas.width * 0.15;
+            const stateX = canvas.width * 0.45;
+            const outputX = canvas.width * 0.85;
+
+            const states = (neuralData.estado_atual || "").split('_');
+            const sensorLabels = ["VITAL", "PROX", "AMEAÇA", "MOV"];
+            const inputYs = [canvas.height * 0.2, canvas.height * 0.4, canvas.height * 0.6, canvas.height * 0.8];
+            
+            let perceptionNodesCoords = [];
+            
+            // Renderização dos Sensores (A origem da percepção)
+            sensorLabels.forEach((label, i) => {
+                const val = states[i] || "---";
+                const y = inputYs[i];
+                perceptionNodesCoords.push({x: inputX, y: y});
+                
+                let nodeColor = C_BLUE;
+                let radius = 25;
+                if ((i === 0 && val === "crit") || (i === 2 && val === "perigo")) {
+                    nodeColor = C_RED;
+                    radius = 30 + Math.sin(time * 12) * 4;
+                } else if (i === 3 && val === "erratico") {
+                    nodeColor = C_PURPLE;
+                    radius = 28;
+                }
+                
+                drawGlowCircle(inputX, y, radius, nodeColor, 20);
+                ctx.fillStyle = C_CYAN;
+                ctx.font = "bold 13px Courier New";
+                ctx.fillText(label, inputX - 45, y + 55);
+                ctx.fillStyle = C_WHITE;
+                ctx.fillText(val.toUpperCase(), inputX - 45, y + 70);
+            });
+
+            // Aplicação da torção bayesiana no núcleo
+            const bX = neuralData.bias_bayesiano ? neuralData.bias_bayesiano[0] : 0;
+            const bY = neuralData.bias_bayesiano ? neuralData.bias_bayesiano[1] : 0;
+            const centerX = stateX + (bX * 200);
+            const centerY = (canvas.height / 2) + (bY * 200);
+
+            // Pulsos dos Sensores para o Q-Core (Consolidação do Estado)
+            const inputPulseProgress = (msTime % 1500) / 1500;
+            perceptionNodesCoords.forEach((pNode, i) => {
+                ctx.beginPath(); ctx.moveTo(pNode.x, pNode.y); ctx.lineTo(centerX, centerY);
+                ctx.strokeStyle = "rgba(0, 255, 204, 0.2)";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                const offsetProgress = (inputPulseProgress + (i * 0.25)) % 1.0;
+                drawEnergyPulse(pNode.x, pNode.y, centerX, centerY, offsetProgress, "rgba(0, 255, 204, 0.6)", 3);
+            });
+
+            // O Núcleo Q-Core (O Estado atual cristalizado)
+            drawGlowCircle(centerX, centerY, 55 + Math.sin(time * 6) * 6, C_CYAN, 40);
+            ctx.fillStyle = C_WHITE;
+            ctx.font = "bold 18px Courier New";
+            ctx.fillText("Q-CORE", centerX - 35, centerY - 15);
+            ctx.font = "12px Courier New";
+            ctx.fillStyle = C_BLUE;
+            ctx.fillText("PONDERAÇÃO", centerX - 35, centerY + 15);
+
+            let pesosAtuais = neuralData.rede_completa[neuralData.estado_atual] || {};
+            let acoes = Object.keys(pesosAtuais);
+            if (acoes.length === 0) acoes = acoesUniversais;
+
+            let outputNodesCoords = {};
+            const outputStartY = canvas.height * 0.05;
+            const outputEndY = canvas.height * 0.95;
+            const outputSpacingY = (acoes.length > 1) ? (outputEndY - outputStartY) / (acoes.length - 1) : 0;
+
+            let decisoesAtivas = Array.isArray(neuralData.decisao_ativa) ? neuralData.decisao_ativa : [];
+
+            // Identificar o peso máximo para normalizar a escala visual
+            let pesoMaximo = 0.1;
+            acoes.forEach(acao => {
+                const peso = pesosAtuais[acao] || 0;
+                if(peso > pesoMaximo) pesoMaximo = peso;
+            });
+
+            // Renderização do Grafo de Ações Diretas
+            acoes.forEach((acao, i) => {
+                const y = (acoes.length === 1) ? canvas.height / 2 : outputStartY + i * outputSpacingY;
+                outputNodesCoords[acao] = {x: outputX, y: y};
+                const isChosen = decisoesAtivas.includes(acao);
+                
+                const pesoBruto = pesosAtuais[acao] || 0;
+                
+                // A inteligência visual: Tamanho, Espessura e Velocidade dependem do Peso Real
+                const pesoNormalizado = Math.max(0.05, pesoBruto / pesoMaximo);
+                
+                let radius = 12 + (pesoNormalizado * 15);
+                let color = C_BLUE;
+                let blur = 10;
+                let lineWidth = 1 + (pesoNormalizado * 6);
+
+                if (isChosen) {
+                    color = C_WHITE;
+                    radius = 35 + Math.abs(Math.sin(time * 20)) * 10;
+                    blur = 50;
+                    lineWidth = 8;
+                }
+
+                // Linha de Conexão Matématica (Espessura revela a atração do nó)
+                ctx.beginPath(); 
+                ctx.moveTo(centerX, centerY); 
+                ctx.lineTo(outputX, y);
+                ctx.strokeStyle = isChosen ? `rgba(255, 255, 255, 0.8)` : `rgba(0, 85, 255, ${0.1 + (pesoNormalizado * 0.5)})`;
+                ctx.lineWidth = lineWidth;
+                ctx.stroke();
+
+                // Nodo de Ação Final
+                drawGlowCircle(outputX, y, radius, color, blur);
+                
+                ctx.fillStyle = isChosen ? C_WHITE : C_CYAN;
+                ctx.font = "bold 14px Courier New";
+                ctx.fillText(acao, outputX + 45, y + 4);
+
+                let valorText = pesoBruto.toFixed(2);
+                ctx.fillStyle = isChosen ? C_WHITE : C_BLUE;
+                ctx.font = "bold 12px Courier New";
+                ctx.fillText(`(W: ${valorText})`, outputX + 45, y + 20);
+
+                // Pulso dinâmico atrelado ao peso (Rotas mais pesadas atraem pulsos mais rápidos)
+                if (pesoBruto > 0.1 || isChosen) {
+                    const cycleTime = isChosen ? 400 : Math.max(800, 3000 - (pesoNormalizado * 2000));
+                    const pulseProg = (msTime % cycleTime) / cycleTime;
+                    const pulseColor = isChosen ? C_WHITE : "rgba(138, 43, 226, 0.7)";
+                    drawEnergyPulse(centerX, centerY, outputX, y, pulseProg, pulseColor, lineWidth * 1.5, isChosen);
+                }
+            });
+
+            requestAnimationFrame(drawNeuralNetwork);
+        }
+
+        drawNeuralNetwork();
+    </script>
+</body>
+</html>

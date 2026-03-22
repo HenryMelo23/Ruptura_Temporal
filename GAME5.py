@@ -8,6 +8,10 @@ import time
 import os
 import sys
 import json
+from flask import Flask, jsonify
+from flask_cors import CORS
+import threading
+import webbrowser
 from Tela_Cartas import tela_de_pausa
 from Variaveis import *
 from utils import *
@@ -66,8 +70,22 @@ mensagens_exibidas = set()
 mensagem_ativa = None
 tempo_fim_mensagem = 0
 
+# Nossa ponte de dados (Dicionário simples, sem frescura)
+dados_ia_umbra = {"estado": "Aguardando...", "pesos": {}}
 
+app = Flask(__name__)
+CORS(app) # Permite que o navegador acesse os dados sem bloqueio de segurança
 
+@app.route('/dados')
+def get_dados():
+    return jsonify(dados_ia_umbra)
+
+def rodar_servidor_flask():
+    # Roda o servidor na porta 5000 de forma silenciosa
+    app.run(host='localhost', port=5000, debug=False, use_reloader=False)
+
+# Dispara o servidor em uma Thread comum
+threading.Thread(target=rodar_servidor_flask, daemon=True).start()
 
 
 def gerar_posicao_aleatoria(largura_mapa, altura_mapa, largura_personagem, altura_personagem):
@@ -526,6 +544,7 @@ moedas_soltadas = []
 #LOOP PRINCIPAL
 running = True
 while running:
+    
     if impulsiva_ativa:
         disparo_paths = ["Sprites/Fogo_impulso1.png", "Sprites/Fogo_impulso2.png"]
     else:
@@ -780,7 +799,12 @@ while running:
         tela.blit(frames_animacao[direcao_atual][frame_atual], (pos_x_personagem, pos_y_personagem))
     ###############################################   DESENHA O BOSS NA TELA ################################
     if boss_final_ativo:
+        
         agora = pygame.time.get_ticks()
+        # DENTRO DO WHILE, LOGO APÓS 'if boss_final_ativo:'
+        if 'dash_aberto' not in estado_atual_ia:
+            webbrowser.open("file://" + os.path.realpath("dashboard_umbra.html"))
+            estado_atual_ia['dash_aberto'] = True
         if 'tempo_start_boss' not in estado_atual_ia:
             estado_atual_ia['tempo_start_boss'] = agora
             estado_atual_ia['ultimo_ataque'] = agora
@@ -817,17 +841,33 @@ while running:
             
             # --- 2. CHAMADA DO CÉREBRO (O GRAFO) ---
             if ataque_liberado:
+                # 1. Processamento da IA 
                 estado_atual_ia = hb.processar_ia_umbra(
                     agora, boss_pos_ia, player_pos_data, 
-                    historico_player, 
-                    disparos, estado_atual_ia, dados_p, memoria_umbra
+                    historico_player, disparos, estado_atual_ia, dados_p, memoria_umbra
                 )
-            
+                
+                # 2. MAPEAMENTO DA REDE NEURAL COMPLETA PARA O DASHBOARD
+                id_estado = estado_atual_ia.get('estado_composto', 'estavel_longe_calmo_linear')
+                
+                # Capturamos todos os estados conhecidos para desenhar o grafo global
+                # (Limitamos aos 5 estados mais recentes para não poluir o visual)
+                estados_relevantes = list(memoria_umbra.q_table.keys())[:]
+                mapa_neural = {est: memoria_umbra.q_table[est] for est in estados_relevantes if isinstance(memoria_umbra.q_table[est], dict)}
+
+                # 3. TRANSMISSÃO PARA O DASHBOARD
+                dados_ia_umbra = {
+                    "estado_atual": id_estado,
+                    "rede_completa": { id_estado: estado_atual_ia.get('ultimos_pesos_calculados', {}) }, 
+                    "decisao_ativa": estado_atual_ia.get('decisoes_ativas', ["---"]),
+                    "bias_bayesiano": memoria_umbra.calcular_bias_bayesiano(),
+                    "estatisticas": dados_p
+                }
             # --- 3. HIERARQUIA DE MOVIMENTAÇÃO ---
             if estado_atual_ia.get('parede_ativa'):
                 if agora - estado_atual_ia.get('ultimo_tick_cura', 0) >= 600:
-                    # Reduzimos para 3% para permitir o counter-play tático
-                    valor_cura = vida_maxima_umbra * 0.03 
+                    # Reduzimos para 2% para permitir o counter-play tático
+                    valor_cura = vida_maxima_umbra * 0.02 
                     
                     # A cura não pode ultrapassar o limite máximo
                     vida_umbra = min(vida_maxima_umbra, vida_umbra + valor_cura)
@@ -1043,7 +1083,7 @@ while running:
             hitbox_player = pygame.Rect(pos_x_personagem, pos_y_personagem, largura_personagem, altura_personagem)
             for p in estado_atual_ia['projeteis']:
                 if p["rect"].colliderect(hitbox_player):
-                    vida -= 25
+                    vida -= 50
                     memoria_umbra.treinar(1.5) # Recompensa alta por acerto tático
                     estado_atual_ia['projeteis'].remove(p)
 
@@ -1116,8 +1156,7 @@ while running:
                     if random.random() <= chance_critico:
                         punicao -= 2.0  # Punição extra por dano crítico (falha tática grave)
                     
-                    if estado_atual_ia.get('parede_ativa'):
-                        punicao -= 1.0  # Punição extra por ser atingido com escudo ativo (quebra de defesa)
+                    
                     if inicio_transicao_mapa == 0 or (agora - inicio_transicao_mapa) >= 35000:
                         trauma_umbra_acumulado += dano_final
                         

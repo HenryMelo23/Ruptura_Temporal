@@ -100,7 +100,41 @@ else:
 # Variável para controlar movimento do analógico
 analogo_movido = False
 
-
+def tela_inserir_nome(tela):
+    nome = ""
+    clock = pygame.time.Clock()
+    fonte_input = pygame.font.Font("Texto/World.otf", 48)
+    fonte_instrucao = pygame.font.Font(caminho_fonte_letras, 18)
+    
+    while True:
+        tela.fill((10, 10, 10))
+        
+        texto_titulo = fonte_titulo.render("IDENTIFIQUE-SE", True, (0, 255, 204))
+        tela.blit(texto_titulo, (largura_tela // 2 - texto_titulo.get_width() // 2, altura_tela // 4))
+        
+        texto_nome = fonte_input.render(nome + "_", True, branco)
+        tela.blit(texto_nome, (largura_tela // 2 - texto_nome.get_width() // 2, altura_tela // 2))
+        
+        instrucao = fonte_instrucao.render("Pressione ENTER para confirmar sua existencia", True, (150, 150, 150))
+        tela.blit(instrucao, (largura_tela // 2 - instrucao.get_width() // 2, altura_tela - 80))
+        
+        pygame.display.flip()
+        
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif evento.type == pygame.KEYDOWN:
+                if evento.key in [pygame.K_RETURN, pygame.K_KP_ENTER] and len(nome) > 0:
+                    with open("nome_jogador.json", "w") as f:
+                        json.dump({"nome": nome}, f)
+                    return
+                elif evento.key == pygame.K_BACKSPACE:
+                    nome = nome[:-1]
+                else:
+                    if len(nome) < 16 and evento.unicode.isprintable():
+                        nome += evento.unicode
+        clock.tick(60)
 
 def tela_escolha_modo():
     import socket, pyperclip
@@ -309,6 +343,7 @@ while True:  # Loop principal do menu
                 ultima_mudanca_de_opcao = pygame.time.get_ticks()
             elif event.key in [pygame.K_SPACE, pygame.K_RETURN]:
                 if indice_selecionado == 0:
+                    tela_inserir_nome(tela)
                     if not os.path.exists("tutorial_config.json"):
                         mostrar_tutorial = tela_decisao_tutorial(tela, fonte)
                         with open("tutorial_config.json", "w") as f:
@@ -356,6 +391,7 @@ while True:  # Loop principal do menu
         elif event.type == pygame.JOYBUTTONDOWN:
             if event.button == 0:  # Botão A no controle Xbox
                 if indice_selecionado == 0:
+                    tela_inserir_nome(tela)
                     pygame.mixer.music.stop()
                     import GAMERE
                 elif indice_selecionado == 1:  # Configuração de Controles

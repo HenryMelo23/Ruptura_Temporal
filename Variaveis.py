@@ -440,7 +440,10 @@ tamanho_bloco_transicao = 40
 estado_atual_ia['parede_ativa'] = False
 estado_atual_ia['ultimo_sifon_fim'] = 0  # Crucial para o cooldown tático
 historico_posicao_player = [] 
-vida_maxima_umbra = 5000
+# Vida base da Umbra
+vida_base_umbra = 450 
+fator_escalonamento = (dano_person_hit / 50) # proporção
+vida_maxima_umbra = vida_base_umbra * (1 + fator_escalonamento)
 vida_umbra = vida_maxima_umbra
 projeteis_boss = []
 tempo_ultimo_ataque_boss = 0
@@ -510,7 +513,7 @@ personagem_paths = {
 geo_umbra_paths = {
     'stop': ["Sprites/Geo-Umbra-V2-1.png", "Sprites/Geo-Umbra-V2-2.png"],
     'damage': ["Sprites/Geo-Umbra-V2-1-dano.png", "Sprites/Geo-Umbra-V2-2-dano.png"],
-    'escudo': ["Sprites/Geo_Umbra_Escudo-1.png", "Sprites/Geo_Umbra_Escudo-2.png"] # Adicionado aqui, senhor.
+    'escudo': ["Sprites/Geo_Umbra_Escudo-1.png", "Sprites/Geo_Umbra_Escudo-2.png"]
 }
 
 personagem_paths2 = {
