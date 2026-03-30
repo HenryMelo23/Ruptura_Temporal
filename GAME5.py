@@ -231,6 +231,8 @@ tempo_ultimo_hit_inimigo = pygame.time.get_ticks()
 
 piscando_vida = False
 
+
+
 def determinar_frames_petro(posicao_petro, posicao_inimigo):
     if posicao_petro[0] < posicao_inimigo[0]:  # Petro está à esquerda do inimigo
         return 'right_petro'
@@ -816,7 +818,21 @@ while running:
     if boss_final_ativo:
         
         agora = pygame.time.get_ticks()
-        
+        if vida_umbra <= 0:
+            mostrar_tutorial = False
+            pygame.time.delay(2000)
+            Musica_tema_fases.stop()
+            Som_tema_fases.stop()
+            memoria_umbra.salvar() 
+            rodando = False
+            pygame.quit()
+            limpar_salvamento()
+            subprocess.run([python, "GAME5.py"])
+            sys.exit()
+
+
+
+
         if 'tempo_start_boss' not in estado_atual_ia:
             estado_atual_ia['tempo_start_boss'] = agora
             estado_atual_ia['ultimo_ataque'] = agora
