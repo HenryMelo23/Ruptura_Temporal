@@ -286,13 +286,16 @@ tempo_inicio_veneno_boss = 0
 ultimo_tick_veneno_boss = 0
 duracao_veneno_boss = 4000 
 fonte_hit= "Texto/breakaway.ttf"
+caminho_fonte_titulo = "Texto/Top_Menu.otf"
 #Fonte para tipos de dano
 fonte_dano_normal = pygame.font.Font(fonte_hit, 26)
 fonte_dano_critico = pygame.font.Font(fonte_hit, 43)
 fonte_veneno = pygame.font.Font(fonte_hit, 26)
+fonte_titulo = pygame.font.Font(caminho_fonte_titulo, 72)
 Dano_Veneno_Acumulado=0.05
 moedas_soltadas = []  # cada moeda é um dicionário com 'rect' e 'imagem'
 moedas_coletadas=0
+
 #########################################  CORES_GERAIS
 
 amarelo= (255, 255, 0)
@@ -441,7 +444,7 @@ estado_atual_ia['parede_ativa'] = False
 estado_atual_ia['ultimo_sifon_fim'] = 0  # Crucial para o cooldown tático
 historico_posicao_player = [] 
 # Vida base da Umbra
-vida_base_umbra = 450 
+vida_base_umbra = 850 
 fator_escalonamento = (dano_person_hit / 50) # proporção
 vida_maxima_umbra = vida_base_umbra * (1 + fator_escalonamento)
 vida_umbra = vida_maxima_umbra
@@ -740,16 +743,16 @@ trembo=False
 mostrar_info = False
 # Dicionário para armazenar as cartas compradas e suas quantidades
 cartas_compradas = {
-    "Speed Boost": 0,
-    "Disparo crescente": 0,
+    "Speed Boost": 4,
+    "Disparo crescente": 6,
     "Tempestade": 0,
     "Cura": 0,
     "Speed Atack": 0,
     "Teleporte": 0,
     "Petro": 0,
     "Defesa": 0,
-    "Sorte": 0,
-    "Poison":0,
+    "Sorte": 10,
+    "Poison":10,
     "Coletora":0,
 }
 cartas_imagens = {

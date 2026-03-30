@@ -311,6 +311,9 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
     centro_mapa = estado_ia['centro_mapa']
     
     # --- 1. HIERARQUIA DE ESTADO ATIVO ---
+    if estado_ia.get('laco_ativo'):
+        estado_ia['decisoes_ativas'] = ["LACO_TEMPORAL"]
+        return estado_ia
     if estado_ia.get('parede_ativa'):
         node_sifon(agora, estado_ia, boss_pos, centro_mapa)
         return estado_ia
@@ -336,6 +339,10 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
         pesos["TELEPORTE"] = 1.8
         if estado_ia.get('dano_recente', 0) > 400:
             pesos["TELEPORTE"] = 4.0
+
+    if 0.35 < vida_p <= 0.70:
+        if agora - estado_ia.get('ultimo_laco', 0) >= 40000:
+            pesos["LACO_TEMPORAL"] = 8.5
 
     # Lógica de Sifon (Gatilhos de Saúde e Dano)
     tempo_pos_sifon = agora - estado_ia.get('ultimo_sifon_fim', 0)
@@ -449,6 +456,16 @@ def processar_ia_umbra(agora, boss_pos, player_pos, historico_player, disparos_p
     elif decisao == "ATAQUE":
         # Executa o disparo direcionado se não houver outras prioridades
         node_ataque_direcionado(agora, estado_ia, bx, by, px, py, historico_player, memoria)
+    elif decisao == "LACO_TEMPORAL":
+        estado_ia['laco_ativo'] = {
+            'tempo_inicio': agora,
+            'duracao': 6000,
+            'cliques_e': 0,
+            'ultimo_tick': agora
+        }
+        estado_ia['ultimo_laco'] = agora
+        estado_ia['dano_recente'] = 0
+
     return estado_ia
 
 def node_miasma_toxico(agora, estado_ia):
@@ -468,7 +485,7 @@ def node_vortice_temporal(agora, estado_ia, px, py, memoria):
         'y': alvo_y,
         'tempo_inicio': agora, 
         'duracao': 8000, 
-        'forca': 2.8
+        'forca': 1.9
     }
     estado_ia['ultimo_vortice'] = agora
 

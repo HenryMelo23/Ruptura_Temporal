@@ -15,10 +15,12 @@ import webbrowser
 from Tela_Cartas import tela_de_pausa
 from Variaveis import *
 from utils import *
+from oratoria_umbra import OratoriaUmbra
 import habilidade_boss as hb
 
 pygame.init()
 memoria_umbra = hb.MemoriaEvolutivaUmbra()
+voz_umbra = OratoriaUmbra()
 
 estalos = pygame.mixer.Sound("Sounds/Estalo.mp3")
 estalos.set_volume(0.07) 
@@ -50,6 +52,15 @@ comando_direção_petro=True
 musica_boss1= 1
 tempo_ultimo_ataque = 0 
 apertou_q=False
+
+try:
+    img_tecla_e_bruta = pygame.image.load('Sprites/Tecla_E.png')
+    tamanho_hud_tecla = 128
+    img_tecla_e = pygame.transform.scale(img_tecla_e_bruta, (tamanho_hud_tecla, tamanho_hud_tecla))
+    img_tecla_e_retangulo = img_tecla_e.get_rect()
+except FileNotFoundError:
+    img_tecla_e = None
+    print("AVISO: Sprites/Tecla_E.png ausente. O prompt visual ficará inativo.")
 
 # Variáveis para rastrear o texto de dano
 texto_dano = None
@@ -452,6 +463,9 @@ def tela_upgrade_aureas(tela, fonte, moedas_disponiveis):
                     selecionado = (selecionado + 1) % len(aureas)
                     while not aureas[selecionado]["ativa"]:
                         selecionado = (selecionado + 1) % len(aureas)
+                if evento.key == pygame.K_e:
+                    if isinstance(estado_atual_ia, dict) and estado_atual_ia.get('laco_ativo'):
+                        estado_atual_ia['laco_ativo']['cliques_e'] += 1
                 elif evento.key in [pygame.K_LEFT, pygame.K_a]:
                     selecionado = (selecionado - 1) % len(aureas)
                     while not aureas[selecionado]["ativa"]:
@@ -761,6 +775,7 @@ while running:
             Tempo_cura=2500
             pos_x_personagem, pos_y_personagem = gerar_posicao_aleatoria(largura_mapa, altura_mapa, largura_personagem, altura_personagem)
         else:
+            voz_umbra.registrar_morte_jogador()
             mostrar_tutorial=False
             pygame.time.delay(2000)
             Musica_tema_fases.stop()
@@ -801,10 +816,7 @@ while running:
     if boss_final_ativo:
         
         agora = pygame.time.get_ticks()
-        # DENTRO DO WHILE, LOGO APÓS 'if boss_final_ativo:'
-        if 'dash_aberto' not in estado_atual_ia:
-            webbrowser.open("file://" + os.path.realpath("dashboard_umbra.html"))
-            estado_atual_ia['dash_aberto'] = True
+        
         if 'tempo_start_boss' not in estado_atual_ia:
             estado_atual_ia['tempo_start_boss'] = agora
             estado_atual_ia['ultimo_ataque'] = agora
@@ -840,6 +852,9 @@ while running:
                 estado_atual_ia['ultimo_reforço_positivo'] = agora
             
             # --- 2. CHAMADA DO CÉREBRO (O GRAFO) ---
+            if random.random() < 0.005: 
+                id_estado_atual = estado_atual_ia.get('estado_composto', 'estavel_longe_calmo_linear')
+                voz_umbra.invocar_fala(agora, cartas_compradas, id_estado_atual)
             if ataque_liberado:
                 # 1. Processamento da IA 
                 estado_atual_ia = hb.processar_ia_umbra(
@@ -987,6 +1002,68 @@ while running:
                     velocidade_personagem = velocidade_personagem_base
             else:
                 velocidade_personagem = velocidade_personagem_base
+            
+
+            laco = estado_atual_ia.get('laco_ativo')
+            if laco:
+                tempo_laco = agora - laco['tempo_inicio']
+                if tempo_laco < laco['duracao']:
+                    velocidade_personagem = 0
+                    
+                    # Resistência calculada (0.0 a 1.0)
+                    intensidade_resistencia = min(1.0, laco.get('cliques_e', 0) / 10.0)
+                    cor_g = int(255 * (1.0 - intensidade_resistencia))
+                    cor_b = int(255 * intensidade_resistencia)
+                    cor_laco = (0, cor_g, cor_b)
+                    
+                    pygame.draw.line(tela, cor_laco, hitbox_boss5.center, personagem_rect.center, random.randint(4, 9))
+                    pygame.draw.circle(tela, cor_laco, personagem_rect.center, 30 + int(intensidade_resistencia * 20), 2)
+                    
+                    # 1. RENDERIZA O LAÇO E O ESCUDO
+                    pygame.draw.line(tela, cor_laco, hitbox_boss5.center, personagem_rect.center, random.randint(4, 9))
+                    pygame.draw.circle(tela, cor_laco, personagem_rect.center, 30 + int(intensidade_resistencia * 20), 2)
+                    
+                    # 2. ANIMAÇÃO DINÂMICA E POSICIONAMENTO DA TECLA [E]
+                    if img_tecla_e:
+                        frequencia_base = 800  
+                        frequencia_atual = max(150, frequencia_base - (intensidade_resistencia * 650))
+                        progresso = (agora % frequencia_atual) / frequencia_atual
+                        
+                        compressao = abs(math.sin(progresso * math.pi)) * 0.3
+                        altura_animada = int(tamanho_hud_tecla * (1.0 - compressao))
+                        
+                        img_tecla_animada = pygame.transform.scale(img_tecla_e, (tamanho_hud_tecla, altura_animada))
+                        
+                        # O Posicionamento exato ocorre estritamente AQUI DENTRO
+                        rect_animado = img_tecla_animada.get_rect()
+                        rect_animado.centerx = personagem_rect.centerx
+                        rect_animado.bottom = personagem_rect.top - 20
+                        
+                        tela.blit(img_tecla_animada, rect_animado)
+                        
+                    # 3. TEXTO DE URGÊNCIA
+                    texto_e = fonte_titulo.render("ESMAGUE [E]", True, cor_laco)
+                    tela.blit(texto_e, (personagem_rect.centerx - texto_e.get_width()//2, personagem_rect.top - 170))
+                    
+                    # 4. CÁLCULO DE DANO (A cada segundo de canalização)
+                    if agora - laco['ultimo_tick'] >= 1000:
+                        dano_roubo = (vida_maxima * 0.02) * (1.0 - intensidade_resistencia)
+                        if dano_roubo > 0:
+                            vida -= dano_roubo
+                            vida_umbra = min(vida_maxima_umbra, vida_umbra + dano_roubo)
+                            efeitos_texto.append({
+                                "texto": f"SUGADA -{int(dano_roubo)}", 
+                                "x": pos_x_personagem, 
+                                "y": pos_y_personagem, 
+                                "tempo_inicio": agora, 
+                                "cor": (138, 43, 226)
+                            })
+                        
+                        laco['cliques_e'] = 0
+                        laco['ultimo_tick'] = agora
+                else:
+                    estado_atual_ia['laco_ativo'] = None
+                    velocidade_personagem = velocidade_personagem_base
 
             if estado_atual_ia.get('fase_tele') == "projetil_viajando":
                 sinal = estado_atual_ia.get('proj_tele')
@@ -1012,7 +1089,9 @@ while running:
                         estado_atual_ia['fase_tele'] = "espera"
                         estado_atual_ia['proj_tele'] = None
                         estado_atual_ia['dano_recente'] = 0 
-
+            elif estado_atual_ia.get('laco_ativo'):
+                # CANALIZAÇÃO DO LAÇO: A Umbra fica completamente imóvel e focada na drenagem.
+                pass
             else:
                 # SÓ SE MOVE NORMALMENTE SE NÃO ESTIVER TELEPORTANDO
                 nova_pos, estado_mental = hb.movimentacao_inteligente_umbra(
@@ -1046,6 +1125,7 @@ while running:
                 hitbox_x = pos_x_umbra + 30
 
             hitbox_boss5 = pygame.Rect(hitbox_x, pos_y_umbra + offset_y_boss, largura_boss - 30, altura_boss)
+            voz_umbra.desenhar_balao(tela, hitbox_boss5, agora)
             tela.blit(img_atual_boss, (pos_x_umbra, pos_y_umbra + offset_y_boss))
            
             # --- 5. BARRA DE VIDA E PROJÉTEIS ---
@@ -1117,6 +1197,7 @@ while running:
             offset_y_boss = math.sin(agora * 0.005) * 7
             img_atual_boss = pygame.transform.flip(img_atual_boss, True, False)
             tela.blit(img_atual_boss, (pos_x_umbra, pos_y_umbra + offset_y_boss))
+            
             
     
     
