@@ -572,7 +572,7 @@ tempo_animacao_stop = 700
 tempo_animacao_no_stop = 300   # Tempo em milissegundos entre cada quadro
 cooldown_dash = False
 tempo_ultimo_dash = 0
-tempo_cooldown_dash = 2800  #  segundos de cooldown
+tempo_cooldown_dash = 3500  # milissegundos de cooldown
 distancia_dash = 300
 
 
@@ -590,7 +590,7 @@ teleporte_timer = 0
 
 # Configurações do disparo
 
-largura_disparo, altura_disparo = 40, 40
+largura_disparo, altura_disparo = 16, 16
 
 velocidade_disparo = 10
 disparos = []
@@ -1037,6 +1037,23 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
+
+
+manifestacao_ativa = "eletrica"
+
+
+def obter_manifestacao_ativa():
+    global manifestacao_ativa
+    try:
+        caminho = "manifestacao_selecionada.json"
+        if os.path.exists("saves/manifestacao_selecionada.json"):
+            caminho = "saves/manifestacao_selecionada.json"
+        with open(caminho, "r", encoding="utf-8") as arquivo:
+            dados = json.load(arquivo)
+        manifestacao_ativa = dados.get("manifestacao_ativa", "eletrica")
+    except Exception:
+        manifestacao_ativa = "eletrica"
+    return manifestacao_ativa
 
 ###################################################  SONS UNIVERSAIS ################################################
 

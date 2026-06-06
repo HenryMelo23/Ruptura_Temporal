@@ -402,6 +402,7 @@ def carregar_atributos():
         
 with open("aurea_selecionada.json", "r") as file:
     aurea = json.load(file)["aurea"]
+manifestacao_ativa = obter_manifestacao_ativa()
 
 with open("tutorial_config.json", "r") as f:
     mostrar_tutorial = json.load(f).get("mostrar_tutorial", True)
@@ -416,7 +417,7 @@ tempo_inicial = time.time()
 boss_vivo1=False
 relogio = pygame.time.Clock()
 ultimo_tempo_reducao = time.time()
-largura_disparo, altura_disparo = 40, 40
+largura_disparo, altura_disparo = 16, 16
 velocidade_disparo = 10
 disparos = []
 

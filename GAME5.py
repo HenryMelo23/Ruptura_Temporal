@@ -184,6 +184,7 @@ def carregar_atributos():
         
 with open("aurea_selecionada.json", "r") as file:
     aurea = json.load(file)["aurea"]
+manifestacao_ativa = obter_manifestacao_ativa()
 
 upgrade_aureas = carregar_upgrade_aureas("aureas_upgrade.json")
 
@@ -197,7 +198,7 @@ movendo = True
 boss_vivo1=False
 relogio = pygame.time.Clock()
 ultimo_tempo_reducao = time.time()
-largura_disparo, altura_disparo = 40, 40
+largura_disparo, altura_disparo = 16, 16
 velocidade_disparo = 10
 disparos = []
 

@@ -187,6 +187,7 @@ def carregar_atributos():
 
 with open("aurea_selecionada.json", "r") as file:
     aurea = json.load(file)["aurea"]
+manifestacao_ativa = obter_manifestacao_ativa()
 
 
 
